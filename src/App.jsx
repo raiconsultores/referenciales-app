@@ -6,8 +6,12 @@ import FormularioReferencial from './components/FormularioReferencial'
 import EstadisticasPanel from './components/EstadisticasPanel'
 import FiltrosPanel from './components/FiltrosPanel'
 import ImportarCSV from './components/ImportarCSV'
+import LoginScreen from './components/LoginScreen'
 
 export default function App() {
+  const [session, setSession]           = useState(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
   const [referenciales, setReferenciales] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -22,6 +26,21 @@ export default function App() {
 
   const [modoAsignarCoordenadas, setModoAsignarCoordenadas] = useState(false)
   const [referencialParaCoordenadas, setReferencialParaCoordenadas] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setCheckingAuth(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+  }
 
   const cargarReferenciales = useCallback(async () => {
     setLoading(true)
@@ -98,6 +117,14 @@ export default function App() {
     setReferencialEditar(null)
   }
 
+  if (checkingAuth) {
+    return <div className="auth-loading">Verificando sesión…</div>
+  }
+
+  if (!session) {
+    return <LoginScreen />
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -115,6 +142,11 @@ export default function App() {
               className={`btn btn-secondary ${mostrarImportar ? 'btn-active' : ''}`}
             >
               Importar CSV
+            </button>
+            <div className="header-divider" />
+            <span className="header-email">{session.user.email}</span>
+            <button onClick={handleLogout} className="btn btn-logout">
+              Salir
             </button>
           </div>
         </div>
