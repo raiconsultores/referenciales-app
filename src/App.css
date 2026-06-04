@@ -134,19 +134,27 @@ body {
 /* icon-only action buttons in table */
 .btn-icon {
   background: none;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
-  padding: 4px 5px;
+  padding: 5px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
-  line-height: 1;
-  transition: background .1s;
+  color: var(--text-muted);
+  line-height: 0;
+  transition: background .12s, color .12s, border-color .12s;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
-.btn-icon:hover { background: var(--bg); }
-.btn-icon.icon-danger:hover { background: #fee2e2; }
+.btn-icon:hover {
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-icon.icon-edit:hover     { color: var(--primary); background: #eff6ff; border-color: #bfdbfe; }
+.btn-icon.icon-location:hover { color: var(--success); background: #f0fdf4; border-color: #bbf7d0; }
+.btn-icon.icon-external:hover { color: var(--primary); background: #eff6ff; border-color: #bfdbfe; }
+.btn-icon.icon-danger:hover   { color: var(--danger);  background: #fee2e2; border-color: #fca5a5; }
 
 /* ============================================================
    Toolbar / Filters
@@ -344,7 +352,7 @@ body {
 .tipo-apartamento  { background: var(--apartamento); }
 .tipo-terreno      { background: var(--terreno); }
 
-.coords-ok   { color: var(--success); font-size: 15px; }
+.coords-ok   { color: var(--success); display: inline-flex; align-items: center; }
 .coords-none { color: var(--border); }
 
 .acciones-cell { white-space: nowrap; }
@@ -547,15 +555,18 @@ body {
 
 .btn-close {
   background: none;
-  border: none;
-  font-size: 18px;
+  border: 1px solid transparent;
   cursor: pointer;
   color: var(--text-muted);
-  line-height: 1;
-  padding: 2px 6px;
+  line-height: 0;
+  padding: 5px;
   border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .12s, color .12s, border-color .12s;
 }
-.btn-close:hover { background: var(--bg); color: var(--text); }
+.btn-close:hover { background: var(--bg); color: var(--text); border-color: var(--border); }
 
 .importar-hint {
   font-size: 12px;

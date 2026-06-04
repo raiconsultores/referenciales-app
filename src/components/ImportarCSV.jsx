@@ -87,7 +87,11 @@ export default function ImportarCSV({ onImportado, onCerrar }) {
     <div className="importar-panel">
       <div className="importar-header">
         <h3>Importar desde CSV</h3>
-        <button onClick={onCerrar} className="btn-close" aria-label="Cerrar">✕</button>
+        <button onClick={onCerrar} className="btn-close" aria-label="Cerrar">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <path d="M1 1L11 11M11 1L1 11"/>
+          </svg>
+        </button>
       </div>
 
       <p className="importar-hint">
@@ -164,7 +168,8 @@ export default function ImportarCSV({ onImportado, onCerrar }) {
 
       {resultado && (
         <div className="importar-ok">
-          ✓ {resultado.importados} referencial{resultado.importados !== 1 ? 'es' : ''} importados correctamente.
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline-block',verticalAlign:'middle',marginRight:6}} aria-hidden="true"><path d="M2 7L5.5 10.5L12 3.5"/></svg>
+          {resultado.importados} referencial{resultado.importados !== 1 ? 'es' : ''} importados correctamente.
           {resultado.omitidas > 0 && ` (${resultado.omitidas} filas omitidas por datos inválidos)`}
         </div>
       )}
