@@ -16,23 +16,33 @@ const EMPTY = {
   observaciones:   '',
 }
 
-// Acepta "14.619167, -90.614444" o "14°37'09"N 90°36'52"O"
+// Acepta decimal “14.619167, -90.614444”
+// o GMS     “14°31’46.84”N, 90°25’56.74”O”  (separador: coma, espacio o ambos)
 function parseCoords(str) {
   if (!str.trim()) return { lat: null, lng: null, valid: false }
 
-  // DMS: grados minutos segundos con N/S y O/W
-  const dmsRe = /(\d+)\s*°\s*(\d+)\s*['’]\s*(\d+(?:\.\d+)?)\s*[""”]?\s*([NSns])\s+(\d+)\s*°\s*(\d+)\s*['’]\s*(\d+(?:\.\d+)?)\s*[""”]?\s*([OoWwEe])/
-  const dm = str.match(dmsRe)
-  if (dm) {
-    const lat = (parseInt(dm[1]) + parseInt(dm[2]) / 60 + parseFloat(dm[3]) / 3600)
-      * (/[Ss]/.test(dm[4]) ? -1 : 1)
-    const lng = (parseInt(dm[5]) + parseInt(dm[6]) / 60 + parseFloat(dm[7]) / 3600)
-      * (/[OoWw]/.test(dm[8]) ? -1 : 1)
+  // Un componente DMS: NNN°NN’NN.NN”[NSOW]
+  // ° = °   ‘ = ‘   “ = “
+  const SEG  = String.raw`(\d+(?:\.\d+)?)`          // segundos (con decimales opcionales)
+  const COMP = String.raw`(\d{1,3})°\s*(\d{1,2})’\s*` + SEG + String.raw`”\s*`
+  const re = new RegExp(
+    COMP + ‘([NSns])’ +              // latitud + dirección
+    String.raw`\s*,?\s*` +           // separador: coma, espacio, o ambos
+    COMP + ‘([EeOoWw])’,             // longitud + dirección
+    ‘u’
+  )
+
+  const m = str.match(re)
+  if (m) {
+    // grupos: [1]latD [2]latM [3]latS [4]latDir [5]lngD [6]lngM [7]lngS [8]lngDir
+    const dms = (d, min, sec) => parseInt(d, 10) + parseInt(min, 10) / 60 + parseFloat(sec) / 3600
+    const lat = dms(m[1], m[2], m[3]) * (/[Ss]/.test(m[4]) ? -1 : 1)
+    const lng = dms(m[5], m[6], m[7]) * (/[OoWw]/.test(m[8]) ? -1 : 1)
     return { lat, lng, valid: true }
   }
 
-  // Decimal: "14.619167, -90.614444"
-  const parts = str.split(',')
+  // Decimal: “14.619167, -90.614444”
+  const parts = str.split(‘,’)
   if (parts.length === 2) {
     const lat = parseFloat(parts[0])
     const lng = parseFloat(parts[1])
