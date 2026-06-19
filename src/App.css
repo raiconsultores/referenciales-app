@@ -532,6 +532,20 @@ body {
   font-size: 13px;
 }
 
+.coord-preview {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted, #6b7280);
+  font-size: 12px;
+}
+
+.coord-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 12px;
+}
+
 /* ============================================================
    CSV Import
    ============================================================ */

@@ -16,13 +16,42 @@ const EMPTY = {
   observaciones:   '',
 }
 
+// Acepta "14.619167, -90.614444" o "14°37'09"N 90°36'52"O"
+function parseCoords(str) {
+  if (!str.trim()) return { lat: null, lng: null, valid: false }
+
+  // DMS: grados minutos segundos con N/S y O/W
+  const dmsRe = /(\d+)\s*°\s*(\d+)\s*['’]\s*(\d+(?:\.\d+)?)\s*[""”]?\s*([NSns])\s+(\d+)\s*°\s*(\d+)\s*['’]\s*(\d+(?:\.\d+)?)\s*[""”]?\s*([OoWwEe])/
+  const dm = str.match(dmsRe)
+  if (dm) {
+    const lat = (parseInt(dm[1]) + parseInt(dm[2]) / 60 + parseFloat(dm[3]) / 3600)
+      * (/[Ss]/.test(dm[4]) ? -1 : 1)
+    const lng = (parseInt(dm[5]) + parseInt(dm[6]) / 60 + parseFloat(dm[7]) / 3600)
+      * (/[OoWw]/.test(dm[8]) ? -1 : 1)
+    return { lat, lng, valid: true }
+  }
+
+  // Decimal: "14.619167, -90.614444"
+  const parts = str.split(',')
+  if (parts.length === 2) {
+    const lat = parseFloat(parts[0])
+    const lng = parseFloat(parts[1])
+    if (!isNaN(lat) && !isNaN(lng)) return { lat, lng, valid: true }
+  }
+
+  return { lat: null, lng: null, valid: false }
+}
+
 export default function FormularioReferencial({ referencial, onGuardar, onCancelar }) {
-  const [form, setForm]         = useState(EMPTY)
-  const [guardando, setGuardando] = useState(false)
-  const [error, setError]       = useState(null)
+  const [form, setForm]             = useState(EMPTY)
+  const [coordInput, setCoordInput] = useState('')
+  const [guardando, setGuardando]   = useState(false)
+  const [error, setError]           = useState(null)
 
   useEffect(() => {
     if (referencial) {
+      const lat = referencial.lat ?? ''
+      const lng = referencial.lng ?? ''
       setForm({
         tipo:            referencial.tipo            ?? 'Casa',
         zona:            referencial.zona            ?? '',
@@ -31,12 +60,14 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
         m2_terreno:      referencial.m2_terreno      ?? '',
         m2_construccion: referencial.m2_construccion ?? '',
         fecha:           referencial.fecha           ?? '',
-        lat:             referencial.lat             ?? '',
-        lng:             referencial.lng             ?? '',
+        lat,
+        lng,
         observaciones:   referencial.observaciones   ?? '',
       })
+      setCoordInput(lat !== '' && lng !== '' ? `${lat}, ${lng}` : '')
     } else {
       setForm(EMPTY)
+      setCoordInput('')
     }
   }, [referencial])
 
@@ -53,6 +84,17 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleCoordChange = (e) => {
+    const val = e.target.value
+    setCoordInput(val)
+    const { lat, lng, valid } = parseCoords(val)
+    if (valid) {
+      setForm(prev => ({ ...prev, lat, lng }))
+    } else if (!val.trim()) {
+      setForm(prev => ({ ...prev, lat: '', lng: '' }))
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -206,28 +248,21 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
         )}
 
         {/* Coordenadas */}
-        <div className="form-group">
-          <label>Latitud</label>
+        <div className="form-group form-full">
+          <label>Coordenadas</label>
           <input
-            name="lat"
-            type="number"
-            value={form.lat}
-            onChange={handleChange}
-            step="any"
-            placeholder="14.6349"
+            value={coordInput}
+            onChange={handleCoordChange}
+            placeholder={`14.619167, -90.614444  o  14°37'09"N 90°36'52"O`}
           />
-        </div>
-
-        <div className="form-group">
-          <label>Longitud</label>
-          <input
-            name="lng"
-            type="number"
-            value={form.lng}
-            onChange={handleChange}
-            step="any"
-            placeholder="-90.5069"
-          />
+          {form.lat !== '' && form.lng !== '' && (
+            <small className="coord-preview">
+              Lat: {parseFloat(form.lat).toFixed(6)} &nbsp;|&nbsp; Lng: {parseFloat(form.lng).toFixed(6)}
+            </small>
+          )}
+          {coordInput.trim() !== '' && form.lat === '' && (
+            <small className="coord-error">Formato no reconocido</small>
+          )}
         </div>
 
         {/* Observaciones */}
