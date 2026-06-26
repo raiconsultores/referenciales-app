@@ -16,8 +16,10 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const [filtroZona, setFiltroZona] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState('')
+  const [filtroZona, setFiltroZona]               = useState('')
+  const [filtroTipo, setFiltroTipo]               = useState('')
+  const [filtroDepartamento, setFiltroDepartamento] = useState('')
+  const [filtroMunicipio, setFiltroMunicipio]     = useState('')
 
   const [vistaActiva, setVistaActiva] = useState('tabla')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
@@ -61,8 +63,10 @@ export default function App() {
     const coincideTexto = !filtroZona ||
       r.zona?.toLowerCase().includes(texto) ||
       r.direccion?.toLowerCase().includes(texto)
-    const coincideTipo = !filtroTipo || r.tipo === filtroTipo
-    return coincideTexto && coincideTipo
+    const coincideTipo         = !filtroTipo         || r.tipo         === filtroTipo
+    const coincideDepartamento = !filtroDepartamento || r.departamento === filtroDepartamento
+    const coincideMunicipio    = !filtroMunicipio    || r.municipio    === filtroMunicipio
+    return coincideTexto && coincideTipo && coincideDepartamento && coincideMunicipio
   })
 
   const handleMapaClick = async (lat, lng) => {
@@ -159,6 +163,11 @@ export default function App() {
             setFiltroZona={setFiltroZona}
             filtroTipo={filtroTipo}
             setFiltroTipo={setFiltroTipo}
+            filtroDepartamento={filtroDepartamento}
+            setFiltroDepartamento={setFiltroDepartamento}
+            filtroMunicipio={filtroMunicipio}
+            setFiltroMunicipio={setFiltroMunicipio}
+            referenciales={referenciales}
           />
         </div>
 

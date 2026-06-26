@@ -169,11 +169,42 @@ body {
 
 .filtros-panel {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.filtros-fila {
+  display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  flex: 1;
 }
+
+.filtros-botones {
+  gap: 6px;
+}
+
+.btn-filtro {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.btn-filtro:hover { background: var(--bg); }
+.btn-filtro-activo {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.btn-filtro-activo:hover { opacity: .9; }
 
 .filtro-input,
 .filtro-select {

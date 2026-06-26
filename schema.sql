@@ -29,13 +29,17 @@ create table if not exists referenciales (
   lat                    numeric(9,6),
   lng                    numeric(9,6),
   observaciones          text,
+  departamento           text,
+  municipio              text,
   created_at             timestamptz   not null default now()
 );
 
 -- Índices para filtros frecuentes
-create index if not exists idx_ref_tipo       on referenciales (tipo);
-create index if not exists idx_ref_zona       on referenciales (zona);
-create index if not exists idx_ref_created_at on referenciales (created_at desc);
+create index if not exists idx_ref_tipo         on referenciales (tipo);
+create index if not exists idx_ref_zona         on referenciales (zona);
+create index if not exists idx_ref_departamento on referenciales (departamento);
+create index if not exists idx_ref_municipio    on referenciales (municipio);
+create index if not exists idx_ref_created_at   on referenciales (created_at desc);
 
 -- Row Level Security — acceso público (ajustar con auth en producción)
 alter table referenciales enable row level security;
@@ -46,3 +50,4 @@ create policy "Public access" on referenciales
   to anon, authenticated
   using (true)
   with check (true);
+  

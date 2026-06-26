@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import { inferirDeptMunicipio } from '../utils/geoUtils'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno']
 
@@ -107,6 +108,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
     setGuardando(true)
     setError(null)
 
+    const { departamento, municipio } = inferirDeptMunicipio(form.zona)
     const payload = {
       tipo:            form.tipo,
       zona:            form.zona.trim(),
@@ -118,6 +120,8 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
       lat:             n(form.lat),
       lng:             n(form.lng),
       observaciones:   form.observaciones.trim() || null,
+      departamento,
+      municipio,
       // precio_m2_terreno y precio_m2_construccion son columnas generadas por Postgres — NO incluir
     }
 
