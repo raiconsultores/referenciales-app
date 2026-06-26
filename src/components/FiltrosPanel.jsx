@@ -8,11 +8,15 @@ export default function FiltrosPanel({
 }) {
   const hasFiltro = filtroZona || filtroTipo || filtroZonaNum || filtroDepartamento || filtroMunicipio
 
-  const zonasNumericas = [...new Set(
-    referenciales
-      .map(r => { const m = (r.zona || '').match(/zona\s+(\d+)/i); return m ? parseInt(m[1], 10) : null })
-      .filter(n => n !== null)
-  )].sort((a, b) => a - b)
+  // Solo calcular zonas de los registros del departamento seleccionado
+  const zonasNumericas = filtroDepartamento
+    ? [...new Set(
+        referenciales
+          .filter(r => r.departamento === filtroDepartamento)
+          .map(r => { const m = (r.zona || '').match(/zona\s+(\d+)/i); return m ? parseInt(m[1], 10) : null })
+          .filter(n => n !== null)
+      )].sort((a, b) => a - b)
+    : []
 
   const departamentos = [...new Set(
     referenciales.map(r => r.departamento).filter(Boolean)
@@ -29,6 +33,7 @@ export default function FiltrosPanel({
   const handleDepartamento = (dep) => {
     setFiltroDepartamento(dep)
     setFiltroMunicipio('')
+    setFiltroZonaNum('')
   }
 
   return (
@@ -52,7 +57,7 @@ export default function FiltrosPanel({
           <option value="Apartamento">Apartamento</option>
           <option value="Terreno">Terreno</option>
         </select>
-        {zonasNumericas.length > 0 && (
+        {filtroDepartamento && zonasNumericas.length > 0 && (
           <select
             value={filtroZonaNum}
             onChange={e => setFiltroZonaNum(e.target.value)}
