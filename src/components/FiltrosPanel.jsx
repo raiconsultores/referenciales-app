@@ -1,11 +1,18 @@
 export default function FiltrosPanel({
   filtroZona, setFiltroZona,
   filtroTipo, setFiltroTipo,
+  filtroZonaNum, setFiltroZonaNum,
   filtroDepartamento, setFiltroDepartamento,
   filtroMunicipio, setFiltroMunicipio,
   referenciales,
 }) {
-  const hasFiltro = filtroZona || filtroTipo || filtroDepartamento || filtroMunicipio
+  const hasFiltro = filtroZona || filtroTipo || filtroZonaNum || filtroDepartamento || filtroMunicipio
+
+  const zonasNumericas = [...new Set(
+    referenciales
+      .map(r => { const m = (r.zona || '').match(/zona\s+(\d+)/i); return m ? parseInt(m[1], 10) : null })
+      .filter(n => n !== null)
+  )].sort((a, b) => a - b)
 
   const departamentos = [...new Set(
     referenciales.map(r => r.departamento).filter(Boolean)
@@ -45,11 +52,24 @@ export default function FiltrosPanel({
           <option value="Apartamento">Apartamento</option>
           <option value="Terreno">Terreno</option>
         </select>
+        {zonasNumericas.length > 0 && (
+          <select
+            value={filtroZonaNum}
+            onChange={e => setFiltroZonaNum(e.target.value)}
+            className="filtro-select"
+          >
+            <option value="">Todas las zonas</option>
+            {zonasNumericas.map(n => (
+              <option key={n} value={String(n)}>Zona {n}</option>
+            ))}
+          </select>
+        )}
         {hasFiltro && (
           <button
             onClick={() => {
               setFiltroZona('')
               setFiltroTipo('')
+              setFiltroZonaNum('')
               setFiltroDepartamento('')
               setFiltroMunicipio('')
             }}

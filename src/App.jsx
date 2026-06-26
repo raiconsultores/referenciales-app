@@ -18,6 +18,7 @@ export default function App() {
 
   const [filtroZona, setFiltroZona]               = useState('')
   const [filtroTipo, setFiltroTipo]               = useState('')
+  const [filtroZonaNum, setFiltroZonaNum]         = useState('')
   const [filtroDepartamento, setFiltroDepartamento] = useState('')
   const [filtroMunicipio, setFiltroMunicipio]     = useState('')
 
@@ -63,10 +64,11 @@ export default function App() {
     const coincideTexto = !filtroZona ||
       r.zona?.toLowerCase().includes(texto) ||
       r.direccion?.toLowerCase().includes(texto)
-    const coincideTipo         = !filtroTipo         || r.tipo         === filtroTipo
+    const coincideTipo         = !filtroTipo     || r.tipo         === filtroTipo
+    const coincideZonaNum      = !filtroZonaNum  || new RegExp(`\\bzona\\s+${filtroZonaNum}\\b`, 'i').test(r.zona || '')
     const coincideDepartamento = !filtroDepartamento || r.departamento === filtroDepartamento
     const coincideMunicipio    = !filtroMunicipio    || r.municipio    === filtroMunicipio
-    return coincideTexto && coincideTipo && coincideDepartamento && coincideMunicipio
+    return coincideTexto && coincideTipo && coincideZonaNum && coincideDepartamento && coincideMunicipio
   })
 
   const handleMapaClick = async (lat, lng) => {
@@ -163,6 +165,8 @@ export default function App() {
             setFiltroZona={setFiltroZona}
             filtroTipo={filtroTipo}
             setFiltroTipo={setFiltroTipo}
+            filtroZonaNum={filtroZonaNum}
+            setFiltroZonaNum={setFiltroZonaNum}
             filtroDepartamento={filtroDepartamento}
             setFiltroDepartamento={setFiltroDepartamento}
             filtroMunicipio={filtroMunicipio}
