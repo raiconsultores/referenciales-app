@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
-import { inferirDeptMunicipio } from '../utils/geoUtils'
+import { inferirDeptMunicipio, extractZonaLimpia } from '../utils/geoUtils'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno']
 
 const EMPTY = {
   tipo:            'Casa',
+  descripcion:     '',
   zona:            '',
   direccion:       '',
   precio_total:    '',
@@ -60,6 +61,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
       const lng = referencial.lng ?? ''
       setForm({
         tipo:            referencial.tipo            ?? 'Casa',
+        descripcion:     referencial.descripcion     ?? '',
         zona:            referencial.zona            ?? '',
         direccion:       referencial.direccion       ?? '',
         precio_total:    referencial.precio_total    ?? '',
@@ -79,7 +81,6 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
 
   const n = (v) => (v !== '' && v != null ? parseFloat(v) : null)
 
-  // Preview calculations (same logic as the DB generated columns)
   const precioM2Terr  = n(form.precio_total) && n(form.m2_terreno)
     ? (n(form.precio_total) / n(form.m2_terreno)).toFixed(0)
     : null
@@ -89,7 +90,15 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    setForm(prev => {
+      const next = { ...prev, [name]: value }
+      // Al editar descripcion, sugerir zona limpia si zona está vacía
+      if (name === 'descripcion' && !prev.zona) {
+        const sugerida = extractZonaLimpia(value)
+        if (sugerida) next.zona = sugerida
+      }
+      return next
+    })
   }
 
   const handleCoordChange = (e) => {
@@ -108,10 +117,11 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
     setGuardando(true)
     setError(null)
 
-    const { departamento, municipio } = inferirDeptMunicipio(form.zona)
+    const { departamento, municipio } = inferirDeptMunicipio(form.descripcion)
     const payload = {
       tipo:            form.tipo,
-      zona:            form.zona.trim(),
+      descripcion:     form.descripcion.trim(),
+      zona:            form.zona.trim() || null,
       direccion:       form.direccion.trim(),
       precio_total:    parseFloat(form.precio_total),
       m2_terreno:      n(form.m2_terreno),
@@ -122,7 +132,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
       observaciones:   form.observaciones.trim() || null,
       departamento,
       municipio,
-      // precio_m2_terreno y precio_m2_construccion son columnas generadas por Postgres — NO incluir
+      // precio_m2_terreno y precio_m2_construccion son columnas generadas por Postgres
     }
 
     const { error: err } = referencial
@@ -140,6 +150,8 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
   const fmtPreview = (v) =>
     v ? `Q ${parseInt(v).toLocaleString('es-GT')}` : ''
 
+  const { departamento: deptPreview, municipio: munPreview } = inferirDeptMunicipio(form.descripcion)
+
   return (
     <form onSubmit={handleSubmit} className="formulario">
       <h2>{referencial ? 'Editar Referencial' : 'Nuevo Referencial'}</h2>
@@ -154,29 +166,40 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
           </select>
         </div>
 
-        {/* Zona */}
+        {/* Zona / Km. */}
         <div className="form-group">
-          <label>Zona *</label>
+          <label>Zona / Km.</label>
           <input
             name="zona"
             value={form.zona}
             onChange={handleChange}
-            required
             placeholder="Zona 10"
           />
         </div>
 
-        {/* Municipio — inferido de zona, solo lectura */}
-        {(() => {
-          const { departamento, municipio } = inferirDeptMunicipio(form.zona)
-          const preview = [municipio, departamento].filter(Boolean).join(', ')
-          return preview ? (
-            <div className="form-group">
-              <label>Municipio (auto)</label>
-              <input readOnly value={preview} className="input-readonly" />
-            </div>
-          ) : null
-        })()}
+        {/* Descripción completa */}
+        <div className="form-group form-full">
+          <label>Descripción completa *</label>
+          <input
+            name="descripcion"
+            value={form.descripcion}
+            onChange={handleChange}
+            required
+            placeholder="Zona 10, Ciudad de Guatemala"
+          />
+        </div>
+
+        {/* Municipio + Departamento — inferidos de descripcion */}
+        {(munPreview || deptPreview) && (
+          <div className="form-group form-full">
+            <label>Ubicación (auto)</label>
+            <input
+              readOnly
+              value={[munPreview, deptPreview].filter(Boolean).join(', ')}
+              className="input-readonly"
+            />
+          </div>
+        )}
 
         {/* Dirección */}
         <div className="form-group form-full">
@@ -249,22 +272,14 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
         {precioM2Terr && (
           <div className="form-group">
             <label>Q/m² Terreno (calculado)</label>
-            <input
-              readOnly
-              value={fmtPreview(precioM2Terr)}
-              className="input-readonly"
-            />
+            <input readOnly value={fmtPreview(precioM2Terr)} className="input-readonly" />
           </div>
         )}
 
         {precioM2Constr && (
           <div className="form-group">
             <label>Q/m² Construcción (calculado)</label>
-            <input
-              readOnly
-              value={fmtPreview(precioM2Constr)}
-              className="input-readonly"
-            />
+            <input readOnly value={fmtPreview(precioM2Constr)} className="input-readonly" />
           </div>
         )}
 

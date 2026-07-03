@@ -9,12 +9,13 @@ export default function FiltrosPanel({
   const hasFiltro = filtroZona || filtroTipo || filtroZonaNum || filtroDepartamento || filtroMunicipio
 
   // Zonas numéricas solo aplican para Ciudad de Guatemala
+  // r.zona es ya la zona limpia: "Zona 10", "Km. 17.5", etc.
   const MUNICIPIO_ZONAS = 'Ciudad de Guatemala'
   const zonasNumericas = filtroMunicipio === MUNICIPIO_ZONAS
     ? [...new Set(
         referenciales
           .filter(r => r.municipio === MUNICIPIO_ZONAS)
-          .map(r => { const m = (r.zona || '').match(/zona\s+(\d+)/i); return m ? parseInt(m[1], 10) : null })
+          .map(r => { const m = (r.zona || '').match(/^Zona\s+(\d+)$/i); return m ? parseInt(m[1], 10) : null })
           .filter(n => n !== null)
       )].sort((a, b) => a - b)
     : []
@@ -50,7 +51,7 @@ export default function FiltrosPanel({
           type="text"
           value={filtroZona}
           onChange={e => setFiltroZona(e.target.value)}
-          placeholder="Buscar por zona o dirección…"
+          placeholder="Buscar descripción o dirección…"
           className="filtro-input"
         />
         <select

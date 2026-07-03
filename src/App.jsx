@@ -62,10 +62,10 @@ export default function App() {
   const referencialesFiltrados = referenciales.filter(r => {
     const texto = filtroZona.toLowerCase()
     const coincideTexto = !filtroZona ||
-      r.zona?.toLowerCase().includes(texto) ||
+      r.descripcion?.toLowerCase().includes(texto) ||
       r.direccion?.toLowerCase().includes(texto)
     const coincideTipo         = !filtroTipo     || r.tipo         === filtroTipo
-    const coincideZonaNum      = !filtroZonaNum || filtroMunicipio !== 'Ciudad de Guatemala' || new RegExp(`\\bzona\\s+${filtroZonaNum}\\b`, 'i').test(r.zona || '')
+    const coincideZonaNum      = !filtroZonaNum || filtroMunicipio !== 'Ciudad de Guatemala' || r.zona === `Zona ${filtroZonaNum}`
     const coincideDepartamento = !filtroDepartamento || r.departamento === filtroDepartamento
     const coincideMunicipio    = !filtroMunicipio    || r.municipio    === filtroMunicipio
     return coincideTexto && coincideTipo && coincideZonaNum && coincideDepartamento && coincideMunicipio

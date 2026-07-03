@@ -9,7 +9,8 @@ create extension if not exists "pgcrypto";
 create table if not exists referenciales (
   id                     uuid          primary key default gen_random_uuid(),
   tipo                   text          not null check (tipo in ('Casa', 'Apartamento', 'Terreno')),
-  zona                   text          not null,
+  descripcion            text          not null,
+  zona                   text,
   direccion              text          not null,
   precio_total           numeric(14,2) not null check (precio_total >= 0),
   m2_terreno             numeric(10,2) check (m2_terreno > 0),
@@ -36,6 +37,7 @@ create table if not exists referenciales (
 
 -- Índices para filtros frecuentes
 create index if not exists idx_ref_tipo         on referenciales (tipo);
+create index if not exists idx_ref_descripcion  on referenciales (descripcion);
 create index if not exists idx_ref_zona         on referenciales (zona);
 create index if not exists idx_ref_departamento on referenciales (departamento);
 create index if not exists idx_ref_municipio    on referenciales (municipio);

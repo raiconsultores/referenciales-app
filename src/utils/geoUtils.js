@@ -1,5 +1,19 @@
 /**
- * Infiere departamento y municipio a partir del campo zona.
+ * Extrae zona limpia de una descripción completa.
+ * Ejemplos: "Zona 16" de "Zona 16, Ciudad de Guatemala"
+ *           "Km. 17.5" de "km. 17.5 Carretera a El Salvador"
+ */
+export function extractZonaLimpia(descripcion) {
+  if (!descripcion) return null
+  const kmMatch = descripcion.match(/km\.?\s+(\d+(?:[.,]\d+)?)/i)
+  if (kmMatch) return `Km. ${kmMatch[1].replace(',', '.')}`
+  const zonaMatch = descripcion.match(/zona\s+(\d+)/i)
+  if (zonaMatch) return `Zona ${zonaMatch[1]}`
+  return null
+}
+
+/**
+ * Infiere departamento y municipio a partir de la descripción completa.
  * Retorna { departamento, municipio } — ambos pueden ser null si no hay match.
  */
 export function inferirDeptMunicipio(zona) {

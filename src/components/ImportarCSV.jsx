@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import Papa from 'papaparse'
 import { supabase } from '../supabaseClient'
-import { inferirDeptMunicipio } from '../utils/geoUtils'
+import { inferirDeptMunicipio, extractZonaLimpia } from '../utils/geoUtils'
 
 const COLUMNAS_REQUERIDAS = ['tipo', 'zona', 'direccion', 'precio_total', 'fecha']
 
@@ -50,11 +50,12 @@ export default function ImportarCSV({ onImportado, onCerrar }) {
     setDbError(null)
 
     const registros = validas.map(f => {
-      const zona = f.zona.trim()
-      const { departamento, municipio } = inferirDeptMunicipio(zona)
+      const descripcion = f.zona.trim()   // CSV column "zona" maps to DB "descripcion"
+      const { departamento, municipio } = inferirDeptMunicipio(descripcion)
       return {
         tipo:            f.tipo.trim(),
-        zona,
+        descripcion,
+        zona:            extractZonaLimpia(descripcion),
         direccion:       f.direccion.trim(),
         precio_total:    parseFloat(f.precio_total),
         m2_terreno:      n(f.m2_terreno),
