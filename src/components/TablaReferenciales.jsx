@@ -69,6 +69,7 @@ export default function TablaReferenciales({ referenciales, onEditar, onEliminar
           <thead>
             <tr>
               <th>Tipo</th>
+              <th>Municipio</th>
               <th>Zona</th>
               <th>Dirección</th>
               <th className="num">Precio Total</th>
@@ -90,6 +91,7 @@ export default function TablaReferenciales({ referenciales, onEditar, onEliminar
                     {r.tipo}
                   </span>
                 </td>
+                <td>{r.municipio || '—'}</td>
                 <td>{r.zona}</td>
                 <td>{r.direccion}</td>
                 <td className="num">{fmtQ(r.precio_total)}</td>

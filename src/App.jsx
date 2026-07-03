@@ -65,7 +65,7 @@ export default function App() {
       r.zona?.toLowerCase().includes(texto) ||
       r.direccion?.toLowerCase().includes(texto)
     const coincideTipo         = !filtroTipo     || r.tipo         === filtroTipo
-    const coincideZonaNum      = !filtroZonaNum || !filtroDepartamento || new RegExp(`\\bzona\\s+${filtroZonaNum}\\b`, 'i').test(r.zona || '')
+    const coincideZonaNum      = !filtroZonaNum || filtroMunicipio !== 'Ciudad de Guatemala' || new RegExp(`\\bzona\\s+${filtroZonaNum}\\b`, 'i').test(r.zona || '')
     const coincideDepartamento = !filtroDepartamento || r.departamento === filtroDepartamento
     const coincideMunicipio    = !filtroMunicipio    || r.municipio    === filtroMunicipio
     return coincideTexto && coincideTipo && coincideZonaNum && coincideDepartamento && coincideMunicipio

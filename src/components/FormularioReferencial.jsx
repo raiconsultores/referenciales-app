@@ -166,6 +166,18 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
           />
         </div>
 
+        {/* Municipio — inferido de zona, solo lectura */}
+        {(() => {
+          const { departamento, municipio } = inferirDeptMunicipio(form.zona)
+          const preview = [municipio, departamento].filter(Boolean).join(', ')
+          return preview ? (
+            <div className="form-group">
+              <label>Municipio (auto)</label>
+              <input readOnly value={preview} className="input-readonly" />
+            </div>
+          ) : null
+        })()}
+
         {/* Dirección */}
         <div className="form-group form-full">
           <label>Dirección *</label>

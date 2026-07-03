@@ -8,11 +8,12 @@ export default function FiltrosPanel({
 }) {
   const hasFiltro = filtroZona || filtroTipo || filtroZonaNum || filtroDepartamento || filtroMunicipio
 
-  // Solo calcular zonas de los registros del departamento seleccionado
-  const zonasNumericas = filtroDepartamento
+  // Zonas numéricas solo aplican para Ciudad de Guatemala
+  const MUNICIPIO_ZONAS = 'Ciudad de Guatemala'
+  const zonasNumericas = filtroMunicipio === MUNICIPIO_ZONAS
     ? [...new Set(
         referenciales
-          .filter(r => r.departamento === filtroDepartamento)
+          .filter(r => r.municipio === MUNICIPIO_ZONAS)
           .map(r => { const m = (r.zona || '').match(/zona\s+(\d+)/i); return m ? parseInt(m[1], 10) : null })
           .filter(n => n !== null)
       )].sort((a, b) => a - b)
@@ -33,6 +34,11 @@ export default function FiltrosPanel({
   const handleDepartamento = (dep) => {
     setFiltroDepartamento(dep)
     setFiltroMunicipio('')
+    setFiltroZonaNum('')
+  }
+
+  const handleMunicipio = (mun) => {
+    setFiltroMunicipio(mun)
     setFiltroZonaNum('')
   }
 
@@ -57,7 +63,7 @@ export default function FiltrosPanel({
           <option value="Apartamento">Apartamento</option>
           <option value="Terreno">Terreno</option>
         </select>
-        {filtroDepartamento && zonasNumericas.length > 0 && (
+        {filtroMunicipio === MUNICIPIO_ZONAS && zonasNumericas.length > 0 && (
           <select
             value={filtroZonaNum}
             onChange={e => setFiltroZonaNum(e.target.value)}
@@ -109,7 +115,7 @@ export default function FiltrosPanel({
         <div className="filtros-fila filtros-botones">
           <button
             className={`btn-filtro${!filtroMunicipio ? ' btn-filtro-activo' : ''}`}
-            onClick={() => setFiltroMunicipio('')}
+            onClick={() => handleMunicipio('')}
           >
             Todos
           </button>
@@ -117,7 +123,7 @@ export default function FiltrosPanel({
             <button
               key={mun}
               className={`btn-filtro${filtroMunicipio === mun ? ' btn-filtro-activo' : ''}`}
-              onClick={() => setFiltroMunicipio(mun)}
+              onClick={() => handleMunicipio(mun)}
             >
               {mun}
             </button>
