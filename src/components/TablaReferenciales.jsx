@@ -1,3 +1,7 @@
+import { useState, useEffect } from 'react'
+import * as XLSX from 'xlsx'
+import DetalleReferencial from './DetalleReferencial'
+
 const fmtQ = (n) =>
   n != null
     ? `Q ${parseFloat(n).toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -49,7 +53,76 @@ const IconPinFilled = () => (
   </svg>
 )
 
+const IconExcel = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2" y="1.5" width="10" height="11" rx="1" />
+    <path d="M4.5 5L6 7L4.5 9" />
+    <path d="M9.5 5L8 7L9.5 9" />
+    <path d="M5 11.5V12.5" />
+    <path d="M9 11.5V12.5" />
+    <path d="M2 4.5H12" />
+  </svg>
+)
+
+function exportarExcel(registros, nombreArchivo) {
+  const rows = registros.map(r => ({
+    'Tipo':                  r.tipo              ?? '',
+    'Departamento':          r.departamento       ?? '',
+    'Municipio':             r.municipio          ?? '',
+    'Zona':                  r.zona               ?? '',
+    'Descripción':           r.descripcion        ?? '',
+    'Dirección':             r.direccion          ?? '',
+    'Precio Total (Q)':      r.precio_total       ?? '',
+    'm² Terreno':            r.m2_terreno         ?? '',
+    'm² Construcción':       r.m2_construccion    ?? '',
+    'Q/m² Terreno':          r.precio_m2_terreno  ?? '',
+    'Q/m² Construcción':     r.precio_m2_construccion ?? '',
+    'Fecha':                 r.fecha              ?? '',
+    'Observaciones':         r.observaciones      ?? '',
+    'Latitud':               r.lat                ?? '',
+    'Longitud':              r.lng                ?? '',
+  }))
+  const ws = XLSX.utils.json_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Referenciales')
+  XLSX.writeFile(wb, nombreArchivo)
+}
+
 export default function TablaReferenciales({ referenciales, onEditar, onEliminar, onAsignarCoordenadas }) {
+  const [seleccionados, setSeleccionados] = useState(new Set())
+  const [detalleRef, setDetalleRef]       = useState(null)
+
+  // Limpiar selección cuando cambia la lista filtrada
+  useEffect(() => { setSeleccionados(new Set()) }, [referenciales])
+
+  const todosSeleccionados = referenciales.length > 0 &&
+    referenciales.every(r => seleccionados.has(r.id))
+  const algunoSeleccionado = seleccionados.size > 0
+
+  const toggleTodos = () => {
+    if (todosSeleccionados) {
+      setSeleccionados(new Set())
+    } else {
+      setSeleccionados(new Set(referenciales.map(r => r.id)))
+    }
+  }
+
+  const toggleUno = (id) => {
+    setSeleccionados(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const handleExportar = () => {
+    const lista = algunoSeleccionado
+      ? referenciales.filter(r => seleccionados.has(r.id))
+      : referenciales
+    const sufijo = algunoSeleccionado ? `_${lista.length}-seleccionados` : `_todos-${lista.length}`
+    exportarExcel(lista, `referenciales${sufijo}.xlsx`)
+  }
+
   if (referenciales.length === 0) {
     return (
       <div className="tabla-vacia">
@@ -59,86 +132,121 @@ export default function TablaReferenciales({ referenciales, onEditar, onEliminar
   }
 
   return (
-    <div className="tabla-container">
-      <div className="tabla-meta">
-        <span>{referenciales.length} referencial{referenciales.length !== 1 ? 'es' : ''}</span>
+    <>
+      <div className="tabla-container">
+        <div className="tabla-meta">
+          <span>{referenciales.length} referencial{referenciales.length !== 1 ? 'es' : ''}</span>
+          <button onClick={handleExportar} className="btn-excel">
+            <IconExcel />
+            {algunoSeleccionado
+              ? `Exportar Excel (${seleccionados.size})`
+              : `Exportar Excel (${referenciales.length})`}
+          </button>
+        </div>
+
+        <div className="tabla-scroll">
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th className="col-check">
+                  <input
+                    type="checkbox"
+                    checked={todosSeleccionados}
+                    onChange={toggleTodos}
+                    title={todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                  />
+                </th>
+                <th>Tipo</th>
+                <th>Departamento</th>
+                <th>Municipio</th>
+                <th>Zona</th>
+                <th>Descripción</th>
+                <th className="num">Precio Total</th>
+                <th className="num">m² Terreno</th>
+                <th className="num">m² Constr.</th>
+                <th className="num">Q/m² Terreno</th>
+                <th className="num">Q/m² Constr.</th>
+                <th>Fecha</th>
+                <th>Obs.</th>
+                <th>Coords</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {referenciales.map(r => (
+                <tr
+                  key={r.id}
+                  className={`tabla-fila${seleccionados.has(r.id) ? ' fila-seleccionada' : ''}`}
+                  onClick={() => setDetalleRef(r)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td className="col-check" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={seleccionados.has(r.id)}
+                      onChange={() => toggleUno(r.id)}
+                    />
+                  </td>
+                  <td>
+                    <span className={`tipo-badge tipo-${r.tipo?.toLowerCase()}`}>
+                      {r.tipo}
+                    </span>
+                  </td>
+                  <td>{r.departamento || '—'}</td>
+                  <td>{r.municipio || '—'}</td>
+                  <td>{r.zona || '—'}</td>
+                  <td>{r.descripcion}</td>
+                  <td className="num">{fmtQ(r.precio_total)}</td>
+                  <td className="num">{fmtM2(r.m2_terreno)}</td>
+                  <td className="num">{fmtM2(r.m2_construccion)}</td>
+                  <td className="num">{fmtQ(r.precio_m2_terreno)}</td>
+                  <td className="num">{fmtQ(r.precio_m2_construccion)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{r.fecha}</td>
+                  <td className="observaciones-cell" title={r.observaciones ?? ''}>
+                    {r.observaciones || '—'}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    {r.lat && r.lng
+                      ? <span className="coords-ok" title={`${r.lat}, ${r.lng}`}><IconPinFilled /></span>
+                      : <span className="coords-none">—</span>}
+                  </td>
+                  <td className="acciones-cell" onClick={e => e.stopPropagation()}>
+                    <button
+                      className="btn-icon icon-edit"
+                      onClick={() => onEditar(r)}
+                      title="Editar"
+                    ><IconEdit /></button>
+                    <button
+                      className="btn-icon icon-location"
+                      onClick={() => onAsignarCoordenadas(r)}
+                      title="Asignar ubicación en mapa"
+                    ><IconMapPin /></button>
+                    <a
+                      className="btn-icon icon-external"
+                      href={googleMapsUrl(r)}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Abrir en Google Maps"
+                    ><IconExternal /></a>
+                    <button
+                      className="btn-icon icon-danger"
+                      onClick={() => onEliminar(r.id)}
+                      title="Eliminar"
+                    ><IconTrash /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="tabla-scroll">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Departamento</th>
-              <th>Municipio</th>
-              <th>Zona</th>
-              <th>Dirección</th>
-              <th className="num">Precio Total</th>
-              <th className="num">m² Terreno</th>
-              <th className="num">m² Constr.</th>
-              <th className="num">Q/m² Terreno</th>
-              <th className="num">Q/m² Constr.</th>
-              <th>Fecha</th>
-              <th>Obs.</th>
-              <th>Coords</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {referenciales.map(r => (
-              <tr key={r.id}>
-                <td>
-                  <span className={`tipo-badge tipo-${r.tipo?.toLowerCase()}`}>
-                    {r.tipo}
-                  </span>
-                </td>
-                <td>{r.departamento || '—'}</td>
-                <td>{r.municipio || '—'}</td>
-                <td>{r.zona || '—'}</td>
-                <td>{r.direccion}</td>
-                <td className="num">{fmtQ(r.precio_total)}</td>
-                <td className="num">{fmtM2(r.m2_terreno)}</td>
-                <td className="num">{fmtM2(r.m2_construccion)}</td>
-                <td className="num">{fmtQ(r.precio_m2_terreno)}</td>
-                <td className="num">{fmtQ(r.precio_m2_construccion)}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>{r.fecha}</td>
-                <td className="observaciones-cell" title={r.observaciones ?? ''}>
-                  {r.observaciones || '—'}
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  {r.lat && r.lng
-                    ? <span className="coords-ok" title={`${r.lat}, ${r.lng}`}><IconPinFilled /></span>
-                    : <span className="coords-none">—</span>}
-                </td>
-                <td className="acciones-cell">
-                  <button
-                    className="btn-icon icon-edit"
-                    onClick={() => onEditar(r)}
-                    title="Editar"
-                  ><IconEdit /></button>
-                  <button
-                    className="btn-icon icon-location"
-                    onClick={() => onAsignarCoordenadas(r)}
-                    title="Asignar ubicación en mapa"
-                  ><IconMapPin /></button>
-                  <a
-                    className="btn-icon icon-external"
-                    href={googleMapsUrl(r)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Abrir en Google Maps"
-                  ><IconExternal /></a>
-                  <button
-                    className="btn-icon icon-danger"
-                    onClick={() => onEliminar(r.id)}
-                    title="Eliminar"
-                  ><IconTrash /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      {detalleRef && (
+        <DetalleReferencial
+          referencial={detalleRef}
+          onCerrar={() => setDetalleRef(null)}
+        />
+      )}
+    </>
   )
 }

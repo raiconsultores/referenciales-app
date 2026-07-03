@@ -819,6 +819,152 @@ body {
 .leaflet-popup-content strong { color: var(--primary); }
 
 /* ============================================================
+   Tabla — checkboxes + selección
+   ============================================================ */
+.col-check {
+  width: 36px;
+  text-align: center;
+  padding: 0 4px !important;
+}
+.col-check input[type="checkbox"] {
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+}
+
+.fila-seleccionada {
+  background: #eff6ff !important;
+}
+.fila-seleccionada:hover {
+  background: #dbeafe !important;
+}
+
+/* ============================================================
+   Tabla — barra superior con contador + botón Excel
+   ============================================================ */
+.tabla-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 8px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.btn-excel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-excel:hover { background: #15803d; }
+.btn-excel svg { flex-shrink: 0; }
+
+/* ============================================================
+   Modal de detalle
+   ============================================================ */
+.detalle-modal {
+  width: 680px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--radius-lg);
+}
+
+.detalle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.detalle-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.detalle-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detalle-mapa {
+  width: 100%;
+  height: 220px;
+  flex-shrink: 0;
+}
+
+.detalle-sin-coords {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  overflow-y: auto;
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.detalle-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+  background: var(--surface);
+}
+
+.detalle-campo-full {
+  grid-column: 1 / -1;
+}
+
+.detalle-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+}
+
+.detalle-value {
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-word;
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 640px) {
@@ -830,4 +976,6 @@ body {
   .filtro-select { width: 100%; }
   .filtros-panel { flex-direction: column; }
   .mapa-container { height: 400px; }
+  .detalle-modal { width: 100%; }
+  .detalle-grid  { grid-template-columns: 1fr; }
 }
