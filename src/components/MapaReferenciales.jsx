@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -42,10 +42,12 @@ export default function MapaReferenciales({
   referencialActivo,
   onMapaClick,
   onCancelarAsignar,
+  onActualizarCoordenadas,
 }) {
   const containerRef = useRef(null)
   const mapRef       = useRef(null)
   const markersRef   = useRef([])
+  const [pendingDrag, setPendingDrag] = useState(null)
 
   // Initialize map once
   useEffect(() => {
@@ -85,7 +87,11 @@ export default function MapaReferenciales({
     referenciales.forEach(r => {
       if (r.lat == null || r.lng == null) return
       const activo = referencialActivo?.id === r.id
-      const marker = L.marker([r.lat, r.lng], { icon: makeIcon(r.tipo, activo) }).addTo(map)
+      const marker = L.marker([r.lat, r.lng], {
+        icon: makeIcon(r.tipo, activo),
+        draggable: !modoAsignar,
+        autoPan: true,
+      }).addTo(map)
 
       const lines = [
         `<strong style="color:#1e40af">${r.tipo}</strong>`,
@@ -98,9 +104,22 @@ export default function MapaReferenciales({
       ].filter(Boolean)
 
       marker.bindPopup(lines.join('<br/>'), { maxWidth: 260 })
+
+      marker.on('dragend', (e) => {
+        const { lat, lng } = e.target.getLatLng()
+        setPendingDrag({
+          id: r.id,
+          label: r.direccion || r.zona || 'este referencial',
+          lat,
+          lng,
+          original: [r.lat, r.lng],
+          marker: e.target,
+        })
+      })
+
       markersRef.current.push(marker)
     })
-  }, [referenciales, referencialActivo])
+  }, [referenciales, referencialActivo, modoAsignar])
 
   // Fly to active referencial when assigning
   useEffect(() => {
@@ -111,8 +130,33 @@ export default function MapaReferenciales({
     }
   }, [referencialActivo])
 
+  const handleConfirmarDrag = async () => {
+    if (!pendingDrag) return
+    await onActualizarCoordenadas(pendingDrag.id, pendingDrag.lat, pendingDrag.lng)
+    setPendingDrag(null)
+  }
+
+  const handleCancelarDrag = () => {
+    if (pendingDrag) pendingDrag.marker.setLatLng(pendingDrag.original)
+    setPendingDrag(null)
+  }
+
   return (
     <div className="mapa-wrapper">
+      {pendingDrag && (
+        <div className="mapa-drag-toast">
+          <span>¿Guardar nueva ubicación para <strong>{pendingDrag.label}</strong>?</span>
+          <div className="mapa-drag-toast-actions">
+            <button onClick={handleConfirmarDrag} className="btn btn-xs btn-primary">
+              Guardar
+            </button>
+            <button onClick={handleCancelarDrag} className="btn btn-xs btn-ghost">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {modoAsignar && (
         <div className="mapa-banner">
           Haz clic en el mapa para ubicar:&nbsp;

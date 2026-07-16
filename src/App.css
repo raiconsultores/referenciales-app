@@ -13,6 +13,7 @@
   --casa:           #2563eb;
   --apartamento:    #16a34a;
   --terreno:        #ea580c;
+  --bodega:        #4e4d4c;
 
   --bg:             #f1f5f9;
   --surface:        #ffffff;
@@ -382,6 +383,8 @@ body {
 .tipo-casa         { background: var(--casa); }
 .tipo-apartamento  { background: var(--apartamento); }
 .tipo-terreno      { background: var(--terreno); }
+.tipo-bodega      { background: var(--bodega); }
+
 
 .coords-ok   { color: var(--success); display: inline-flex; align-items: center; }
 .coords-none { color: var(--border); }
@@ -426,6 +429,31 @@ body {
   box-shadow: var(--shadow-md);
   backdrop-filter: blur(4px);
   white-space: nowrap;
+}
+
+.mapa-drag-toast {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.mapa-drag-toast-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .mapa-leyenda {

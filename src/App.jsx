@@ -84,6 +84,15 @@ export default function App() {
     }
   }
 
+  const handleActualizarCoordenadas = async (id, lat, lng) => {
+    const { error } = await supabase
+      .from('referenciales')
+      .update({ lat, lng })
+      .eq('id', id)
+    if (!error) await cargarReferenciales()
+    else alert('Error al actualizar coordenadas: ' + error.message)
+  }
+
   const handleAsignarCoordenadas = (ref) => {
     setReferencialParaCoordenadas(ref)
     setModoAsignarCoordenadas(true)
@@ -221,6 +230,7 @@ export default function App() {
             referencialActivo={referencialParaCoordenadas}
             onMapaClick={handleMapaClick}
             onCancelarAsignar={handleCancelarAsignar}
+            onActualizarCoordenadas={handleActualizarCoordenadas}
           />
         )}
       </main>
