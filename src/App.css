@@ -591,6 +591,29 @@ body {
   font-size: 13px;
 }
 
+.coord-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.coord-label-row label { margin: 0; }
+
+.spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+.spinner-dark {
+  border-color: rgba(30,64,175,.25);
+  border-top-color: var(--primary);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 .coord-preview {
   display: block;
   margin-top: 4px;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { inferirDeptMunicipio, extractZonaLimpia } from '../utils/geoUtils'
+import { geocodificarDireccion } from '../utils/geocode'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno']
 
@@ -54,6 +55,8 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
   const [coordInput, setCoordInput] = useState('')
   const [guardando, setGuardando]   = useState(false)
   const [error, setError]           = useState(null)
+  const [buscandoCoords, setBuscandoCoords] = useState(false)
+  const [geoError, setGeoError]             = useState(null)
 
   useEffect(() => {
     if (referencial) {
@@ -77,6 +80,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
       setForm(EMPTY)
       setCoordInput('')
     }
+    setGeoError(null)
   }, [referencial])
 
   const n = (v) => (v !== '' && v != null ? parseFloat(v) : null)
@@ -104,11 +108,33 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
   const handleCoordChange = (e) => {
     const val = e.target.value
     setCoordInput(val)
+    setGeoError(null)
     const { lat, lng, valid } = parseCoords(val)
     if (valid) {
       setForm(prev => ({ ...prev, lat, lng }))
     } else if (!val.trim()) {
       setForm(prev => ({ ...prev, lat: '', lng: '' }))
+    }
+  }
+
+  const handleBuscarCoordenadas = async () => {
+    if (!form.direccion.trim()) return
+    setBuscandoCoords(true)
+    setGeoError(null)
+    try {
+      const { departamento, municipio } = inferirDeptMunicipio(form.descripcion)
+      const query = [form.direccion, municipio, departamento, 'Guatemala'].filter(Boolean).join(', ')
+      const resultado = await geocodificarDireccion(query)
+      if (resultado) {
+        setForm(prev => ({ ...prev, lat: resultado.lat, lng: resultado.lng }))
+        setCoordInput(`${resultado.lat}, ${resultado.lng}`)
+      } else {
+        setGeoError('No se encontró la dirección, puedes ajustar el pin manualmente')
+      }
+    } catch (err) {
+      setGeoError(err?.message ?? 'Error al buscar la dirección')
+    } finally {
+      setBuscandoCoords(false)
     }
   }
 
@@ -285,7 +311,18 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
 
         {/* Coordenadas */}
         <div className="form-group form-full">
-          <label>Coordenadas</label>
+          <div className="coord-label-row">
+            <label>Coordenadas</label>
+            <button
+              type="button"
+              className="btn btn-xs btn-outline"
+              onClick={handleBuscarCoordenadas}
+              disabled={buscandoCoords || !form.direccion.trim()}
+            >
+              {buscandoCoords && <span className="spinner spinner-dark" />}
+              {buscandoCoords ? 'Buscando…' : 'Buscar coordenadas'}
+            </button>
+          </div>
           <input
             value={coordInput}
             onChange={handleCoordChange}
@@ -299,6 +336,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
           {coordInput.trim() !== '' && form.lat === '' && (
             <small className="coord-error">Formato no reconocido</small>
           )}
+          {geoError && <small className="coord-error">{geoError}</small>}
         </div>
 
         {/* Observaciones */}

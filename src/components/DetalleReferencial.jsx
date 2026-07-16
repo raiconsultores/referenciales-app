@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { geocodificarDireccion } from '../utils/geocode'
 
 const GT_CENTER  = [14.6349, -90.5069]
 const ZOOM_GUIA  = 12
@@ -45,6 +46,8 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
   const [guardando, setGuardando]       = useState(false)
   const [guardado, setGuardado]         = useState(false)
   const [errorGuardar, setErrorGuardar] = useState(null)
+  const [buscandoCoords, setBuscandoCoords] = useState(false)
+  const [geoError, setGeoError]             = useState(null)
 
   // Reiniciar el estado local al abrir un referencial distinto
   useEffect(() => {
@@ -52,6 +55,8 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
     setGuardando(false)
     setGuardado(false)
     setErrorGuardar(null)
+    setBuscandoCoords(false)
+    setGeoError(null)
   }, [r?.id])
 
   // Crear el mapa una vez por referencial abierto
@@ -122,6 +127,25 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
   const original   = r.lat != null && r.lng != null ? [r.lat, r.lng] : null
   const haCambiado = !!pin && (!original || pin[0] !== original[0] || pin[1] !== original[1])
 
+  const handleBuscarAutomatico = async () => {
+    setBuscandoCoords(true)
+    setGeoError(null)
+    try {
+      const query = [r.direccion, r.municipio, r.departamento, 'Guatemala'].filter(Boolean).join(', ')
+      const resultado = await geocodificarDireccion(query)
+      if (resultado) {
+        setPin([resultado.lat, resultado.lng])
+        setGuardado(false)
+      } else {
+        setGeoError('No se encontró la dirección, puedes ajustar el pin manualmente')
+      }
+    } catch (err) {
+      setGeoError(err?.message ?? 'Error al buscar la dirección')
+    } finally {
+      setBuscandoCoords(false)
+    }
+  }
+
   const handleGuardarUbicacion = async () => {
     if (!pin) return
     setGuardando(true)
@@ -162,23 +186,35 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
           )}
         </div>
 
-        {pin && (
-          <div className="detalle-mapa-acciones">
-            <span className="detalle-mapa-coords">{pin[0].toFixed(6)}, {pin[1].toFixed(6)}</span>
-            {haCambiado ? (
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={handleGuardarUbicacion}
-                disabled={guardando}
-              >
-                {guardando ? 'Guardando…' : 'Guardar ubicación'}
-              </button>
-            ) : guardado && (
-              <span className="detalle-mapa-ok">✓ Ubicación guardada</span>
-            )}
-          </div>
-        )}
+        <div className="detalle-mapa-acciones">
+          {pin ? (
+            <>
+              <span className="detalle-mapa-coords">{pin[0].toFixed(6)}, {pin[1].toFixed(6)}</span>
+              {haCambiado ? (
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={handleGuardarUbicacion}
+                  disabled={guardando}
+                >
+                  {guardando ? 'Guardando…' : 'Guardar ubicación'}
+                </button>
+              ) : guardado && (
+                <span className="detalle-mapa-ok">✓ Ubicación guardada</span>
+              )}
+            </>
+          ) : (
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={handleBuscarAutomatico}
+              disabled={buscandoCoords}
+            >
+              {buscandoCoords && <span className="spinner spinner-dark" />}
+              {buscandoCoords ? 'Buscando…' : 'Buscar coordenadas automáticamente'}
+            </button>
+          )}
+        </div>
         {errorGuardar && <div className="form-error">{errorGuardar}</div>}
+        {geoError && <div className="form-error">{geoError}</div>}
 
         <div className="detalle-grid">
           <Campo label="Descripción"        value={r.descripcion}         full />
