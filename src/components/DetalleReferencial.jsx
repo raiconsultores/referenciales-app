@@ -6,6 +6,22 @@ const GT_CENTER  = [14.6349, -90.5069]
 const ZOOM_GUIA  = 12
 const ZOOM_PIN   = 16
 
+// Ícono propio en vez del marcador por defecto de Leaflet (sus PNG no resuelven bien con Vite)
+function pinIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:18px;height:18px;
+      background:#1e40af;
+      border:3px solid #fff;
+      border-radius:50%;
+      box-shadow:0 2px 6px rgba(0,0,0,.45);
+    "></div>`,
+    iconSize:   [18, 18],
+    iconAnchor: [9, 9],
+  })
+}
+
 const fmtQ  = (n) => n != null ? `Q ${parseFloat(n).toLocaleString('es-GT', { maximumFractionDigits: 0 })}` : '—'
 const fmtM2 = (n) => n != null ? `${parseFloat(n).toLocaleString('es-GT')} m²` : '—'
 
@@ -90,7 +106,7 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
     if (markerRef.current) {
       markerRef.current.setLatLng(pin)
     } else {
-      const marker = L.marker(pin, { draggable: true, autoPan: true }).addTo(map)
+      const marker = L.marker(pin, { icon: pinIcon(), draggable: true, autoPan: true }).addTo(map)
       marker.on('dragend', (e) => {
         const { lat, lng } = e.target.getLatLng()
         setPin([lat, lng])
