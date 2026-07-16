@@ -89,8 +89,8 @@ export default function App() {
       .from('referenciales')
       .update({ lat, lng })
       .eq('id', id)
-    if (!error) await cargarReferenciales()
-    else alert('Error al actualizar coordenadas: ' + error.message)
+    if (error) throw error
+    await cargarReferenciales()
   }
 
   const handleAsignarCoordenadas = (ref) => {
@@ -220,6 +220,7 @@ export default function App() {
             onEditar={handleEditar}
             onEliminar={handleEliminar}
             onAsignarCoordenadas={handleAsignarCoordenadas}
+            onActualizarCoordenadas={handleActualizarCoordenadas}
           />
         )}
 

@@ -132,7 +132,12 @@ export default function MapaReferenciales({
 
   const handleConfirmarDrag = async () => {
     if (!pendingDrag) return
-    await onActualizarCoordenadas(pendingDrag.id, pendingDrag.lat, pendingDrag.lng)
+    try {
+      await onActualizarCoordenadas(pendingDrag.id, pendingDrag.lat, pendingDrag.lng)
+    } catch (err) {
+      alert('Error al actualizar coordenadas: ' + (err?.message ?? err))
+      pendingDrag.marker.setLatLng(pendingDrag.original)
+    }
     setPendingDrag(null)
   }
 

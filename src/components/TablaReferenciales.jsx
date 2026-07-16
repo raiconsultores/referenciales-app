@@ -88,12 +88,19 @@ function exportarExcel(registros, nombreArchivo) {
   XLSX.writeFile(wb, nombreArchivo)
 }
 
-export default function TablaReferenciales({ referenciales, onEditar, onEliminar, onAsignarCoordenadas }) {
+export default function TablaReferenciales({ referenciales, onEditar, onEliminar, onAsignarCoordenadas, onActualizarCoordenadas }) {
   const [seleccionados, setSeleccionados] = useState(new Set())
   const [detalleRef, setDetalleRef]       = useState(null)
 
   // Limpiar selección cuando cambia la lista filtrada
   useEffect(() => { setSeleccionados(new Set()) }, [referenciales])
+
+  // Mantener el modal de detalle sincronizado tras recargar datos (p. ej. tras guardar ubicación)
+  useEffect(() => {
+    if (!detalleRef) return
+    const actualizado = referenciales.find(r => r.id === detalleRef.id)
+    if (actualizado) setDetalleRef(actualizado)
+  }, [referenciales])
 
   const todosSeleccionados = referenciales.length > 0 &&
     referenciales.every(r => seleccionados.has(r.id))
@@ -245,6 +252,7 @@ export default function TablaReferenciales({ referenciales, onEditar, onEliminar
         <DetalleReferencial
           referencial={detalleRef}
           onCerrar={() => setDetalleRef(null)}
+          onActualizarCoordenadas={onActualizarCoordenadas}
         />
       )}
     </>

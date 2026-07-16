@@ -1,6 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+
+const GT_CENTER  = [14.6349, -90.5069]
+const ZOOM_GUIA  = 12
+const ZOOM_PIN   = 16
 
 const fmtQ  = (n) => n != null ? `Q ${parseFloat(n).toLocaleString('es-GT', { maximumFractionDigits: 0 })}` : '—'
 const fmtM2 = (n) => n != null ? `${parseFloat(n).toLocaleString('es-GT')} m²` : '—'
@@ -14,16 +18,34 @@ function Campo({ label, value, full }) {
   )
 }
 
-export default function DetalleReferencial({ referencial: r, onCerrar }) {
+export default function DetalleReferencial({ referencial: r, onCerrar, onActualizarCoordenadas }) {
   const mapDivRef   = useRef(null)
   const mapInstance = useRef(null)
+  const markerRef   = useRef(null)
 
+  const [pin, setPin]                   = useState(
+    r?.lat != null && r?.lng != null ? [r.lat, r.lng] : null
+  )
+  const [guardando, setGuardando]       = useState(false)
+  const [guardado, setGuardado]         = useState(false)
+  const [errorGuardar, setErrorGuardar] = useState(null)
+
+  // Reiniciar el estado local al abrir un referencial distinto
   useEffect(() => {
-    if (!r?.lat || !r?.lng || !mapDivRef.current) return
+    setPin(r?.lat != null && r?.lng != null ? [r.lat, r.lng] : null)
+    setGuardando(false)
+    setGuardado(false)
+    setErrorGuardar(null)
+  }, [r?.id])
+
+  // Crear el mapa una vez por referencial abierto
+  useEffect(() => {
+    if (!mapDivRef.current) return
 
     if (mapInstance.current) {
       mapInstance.current.remove()
       mapInstance.current = null
+      markerRef.current = null
     }
 
     const map = L.map(mapDivRef.current, {
@@ -34,20 +56,69 @@ export default function DetalleReferencial({ referencial: r, onCerrar }) {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
     }).addTo(map)
-    map.setView([r.lat, r.lng], 16)
-    L.circleMarker([r.lat, r.lng], {
-      radius: 9,
-      fillColor: '#1e40af',
-      color: '#ffffff',
-      weight: 2.5,
-      fillOpacity: 1,
-    }).addTo(map)
+
+    const inicial = r?.lat != null && r?.lng != null ? [r.lat, r.lng] : null
+    map.setView(inicial ?? GT_CENTER, inicial ? ZOOM_PIN : ZOOM_GUIA)
+
+    map.on('click', (e) => {
+      setPin([e.latlng.lat, e.latlng.lng])
+      setGuardado(false)
+    })
 
     mapInstance.current = map
-    return () => { map.remove(); mapInstance.current = null }
-  }, [r])
+    return () => {
+      map.remove()
+      mapInstance.current = null
+      markerRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r?.id])
+
+  // Mantener el marcador sincronizado con la posición del pin
+  useEffect(() => {
+    const map = mapInstance.current
+    if (!map) return
+
+    if (!pin) {
+      if (markerRef.current) {
+        markerRef.current.remove()
+        markerRef.current = null
+      }
+      return
+    }
+
+    if (markerRef.current) {
+      markerRef.current.setLatLng(pin)
+    } else {
+      const marker = L.marker(pin, { draggable: true, autoPan: true }).addTo(map)
+      marker.on('dragend', (e) => {
+        const { lat, lng } = e.target.getLatLng()
+        setPin([lat, lng])
+        setGuardado(false)
+      })
+      markerRef.current = marker
+      map.setView(pin, Math.max(map.getZoom(), ZOOM_PIN))
+    }
+  }, [pin])
 
   if (!r) return null
+
+  const original   = r.lat != null && r.lng != null ? [r.lat, r.lng] : null
+  const haCambiado = !!pin && (!original || pin[0] !== original[0] || pin[1] !== original[1])
+
+  const handleGuardarUbicacion = async () => {
+    if (!pin) return
+    setGuardando(true)
+    setErrorGuardar(null)
+    try {
+      await onActualizarCoordenadas(r.id, pin[0], pin[1])
+      setGuardado(true)
+    } catch (err) {
+      setErrorGuardar(err?.message ?? 'Error al guardar la ubicación')
+    } finally {
+      setGuardando(false)
+    }
+  }
 
   return (
     <div
@@ -68,11 +139,30 @@ export default function DetalleReferencial({ referencial: r, onCerrar }) {
           </button>
         </div>
 
-        {r.lat && r.lng ? (
+        <div className="detalle-mapa-wrapper">
           <div className="detalle-mapa" ref={mapDivRef} />
-        ) : (
-          <div className="detalle-sin-coords">Sin coordenadas asignadas</div>
+          {!pin && (
+            <div className="detalle-mapa-hint">Haz clic en el mapa para asignar ubicación</div>
+          )}
+        </div>
+
+        {pin && (
+          <div className="detalle-mapa-acciones">
+            <span className="detalle-mapa-coords">{pin[0].toFixed(6)}, {pin[1].toFixed(6)}</span>
+            {haCambiado ? (
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={handleGuardarUbicacion}
+                disabled={guardando}
+              >
+                {guardando ? 'Guardando…' : 'Guardar ubicación'}
+              </button>
+            ) : guardado && (
+              <span className="detalle-mapa-ok">✓ Ubicación guardada</span>
+            )}
+          </div>
         )}
+        {errorGuardar && <div className="form-error">{errorGuardar}</div>}
 
         <div className="detalle-grid">
           <Campo label="Descripción"        value={r.descripcion}         full />
@@ -86,8 +176,8 @@ export default function DetalleReferencial({ referencial: r, onCerrar }) {
           <Campo label="m² Construcción"    value={fmtM2(r.m2_construccion)} />
           <Campo label="Q/m² Terreno"       value={fmtQ(r.precio_m2_terreno)} />
           <Campo label="Q/m² Construcción"  value={fmtQ(r.precio_m2_construccion)} />
-          {r.lat && r.lng && (
-            <Campo label="Coordenadas" value={`${r.lat}, ${r.lng}`} />
+          {pin && (
+            <Campo label="Coordenadas" value={`${pin[0]}, ${pin[1]}`} />
           )}
           {r.observaciones && (
             <Campo label="Observaciones" value={r.observaciones} full />
