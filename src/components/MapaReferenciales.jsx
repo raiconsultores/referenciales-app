@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -76,10 +76,20 @@ export default function MapaReferenciales({
     return () => { map.off('click', handler) }
   }, [modoAsignar, onMapaClick])
 
+  // Firma estable del listado — evita reconstruir todos los pines cuando el padre
+  // re-renderiza y produce un nuevo array con el mismo contenido (p. ej. al filtrar)
+  const referencialesKey = useMemo(
+    () => referenciales.map(r => `${r.id}:${r.lat}:${r.lng}:${r.tipo}`).join('|'),
+    [referenciales]
+  )
+
   // Update markers when data or active item changes
   useEffect(() => {
     const map = mapRef.current
-    if (!map) return
+    // No reconstruir mientras hay un drag pendiente de confirmar: evita que el
+    // marcador recién arrastrado se destruya a mitad de la interacción y aparezca
+    // duplicado (uno "fantasma" en la posición original y otro en la nueva).
+    if (!map || pendingDrag) return
 
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []
@@ -119,7 +129,8 @@ export default function MapaReferenciales({
 
       markersRef.current.push(marker)
     })
-  }, [referenciales, referencialActivo, modoAsignar])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referencialesKey, referencialActivo, modoAsignar, pendingDrag])
 
   // Fly to active referencial when assigning
   useEffect(() => {
