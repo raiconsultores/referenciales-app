@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { inferirDeptMunicipio, extractZonaLimpia } from '../utils/geoUtils'
 import { geocodificarDireccion } from '../utils/geocode'
+import { parseCoords } from '../utils/coords'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno']
 
@@ -17,37 +18,6 @@ const EMPTY = {
   lat:             '',
   lng:             '',
   observaciones:   '',
-}
-
-// Acepta decimal 14.619167, -90.614444 o GMS 14deg31m46s N 90deg25m56s O
-function parseCoords(str) {
-  if (!str.trim()) return { lat: null, lng: null, valid: false }
-
-  // String.fromCharCode evita poner grado(176) comilla(39) doble(34) en el fuente JSX
-  const DEG = String.fromCharCode(176)
-  const MIN = String.fromCharCode(39)
-  const SEC = String.fromCharCode(34)
-  const dmsPattern =
-    "(\\d{1,3})" + DEG + "\\s*(\\d{1,2})" + MIN + "\\s*(\\d+(?:\\.\\d+)?)\\s*" + SEC + "\\s*([NSns])" +
-    "\\s*,?\\s*" +
-    "(\\d{1,3})" + DEG + "\\s*(\\d{1,2})" + MIN + "\\s*(\\d+(?:\\.\\d+)?)\\s*" + SEC + "\\s*([EeOoWw])"
-  const dmsRe = new RegExp(dmsPattern, "u")
-  const m = str.match(dmsRe)
-  if (m) {
-    const dms = (d, min, sec) => parseInt(d, 10) + parseInt(min, 10) / 60 + parseFloat(sec) / 3600
-    const lat = dms(m[1], m[2], m[3]) * (/[Ss]/.test(m[4]) ? -1 : 1)
-    const lng = dms(m[5], m[6], m[7]) * (/[OoWw]/.test(m[8]) ? -1 : 1)
-    return { lat, lng, valid: true }
-  }
-
-  const parts = str.split(",")
-  if (parts.length === 2) {
-    const lat = parseFloat(parts[0])
-    const lng = parseFloat(parts[1])
-    if (!isNaN(lat) && !isNaN(lng)) return { lat, lng, valid: true }
-  }
-
-  return { lat: null, lng: null, valid: false }
 }
 
 export default function FormularioReferencial({ referencial, onGuardar, onCancelar }) {

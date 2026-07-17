@@ -14,6 +14,8 @@
   --apartamento:    #16a34a;
   --terreno:        #ea580c;
   --bodega:        #4e4d4c;
+  --comercio:       #9333ea;
+  --oficina:        #0891b2;
 
   --bg:             #f1f5f9;
   --surface:        #ffffff;
@@ -73,6 +75,40 @@ body {
 .header-sub   { font-size: 12px; opacity: .75; margin-top: 1px; }
 
 .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.header-inner-nav {
+  height: 44px;
+  border-top: 1px solid rgba(255,255,255,.15);
+}
+
+.seccion-tabs {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+}
+
+.seccion-tab {
+  padding: 0 18px;
+  border: none;
+  background: none;
+  color: rgba(255,255,255,.72);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.seccion-tab:hover { color: #fff; background: rgba(255,255,255,.08); }
+.seccion-tab-activo {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.toolbar-acciones {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
 
 .app-main {
   max-width: 1400px;
@@ -384,6 +420,8 @@ body {
 .tipo-apartamento  { background: var(--apartamento); }
 .tipo-terreno      { background: var(--terreno); }
 .tipo-bodega      { background: var(--bodega); }
+.tipo-comercio     { background: var(--comercio); }
+.tipo-oficina      { background: var(--oficina); }
 
 
 .coords-ok   { color: var(--success); display: inline-flex; align-items: center; }
