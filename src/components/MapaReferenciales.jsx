@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import ReportarModal from './ReportarModal'
 
 // Guatemala City center
 const GT_CENTER = [14.6349, -90.5069]
@@ -57,11 +58,13 @@ export default function MapaReferenciales({
   onCancelarAsignar,
   onActualizarCoordenadas,
   flagsPendientesIds,
+  onReportar,
 }) {
   const containerRef = useRef(null)
   const mapRef       = useRef(null)
   const markersRef   = useRef([])
   const [pendingDrag, setPendingDrag] = useState(null)
+  const [reportarRef, setReportarRef] = useState(null)
 
   // Initialize map once
   useEffect(() => {
@@ -121,15 +124,21 @@ export default function MapaReferenciales({
       const lines = [
         reportado ? '<strong style="color:#dc2626">🚩 Reporte pendiente</strong>' : null,
         `<strong style="color:#1e40af">${r.tipo}</strong>`,
-        `<strong>${r.zona}</strong> — ${r.direccion}`,
+        r.zona ? `<strong>${r.zona}</strong> — ${r.direccion}` : r.direccion,
         `<strong>${fmtQ(r.precio_total) ?? '—'}</strong>`,
         r.m2_terreno      ? `Terreno: ${r.m2_terreno} m²  →  ${fmtQ(r.precio_m2_terreno) ?? '—'}/m²` : null,
         r.m2_construccion ? `Constr.: ${r.m2_construccion} m²  →  ${fmtQ(r.precio_m2_construccion) ?? '—'}/m²` : null,
         r.fecha           ? `Fecha: ${r.fecha}` : null,
         r.observaciones   ? `<em style="color:#64748b">${r.observaciones}</em>` : null,
+        '<button type="button" class="popup-reportar-btn">🚩 Reportar problema</button>',
       ].filter(Boolean)
 
       marker.bindPopup(lines.join('<br/>'), { maxWidth: 260 })
+
+      marker.on('popupopen', (e) => {
+        const btn = e.popup.getElement()?.querySelector('.popup-reportar-btn')
+        if (btn) btn.onclick = () => setReportarRef(r)
+      })
 
       marker.on('dragend', (e) => {
         const { lat, lng } = e.target.getLatLng()
@@ -218,6 +227,14 @@ export default function MapaReferenciales({
           </span>
         )}
       </div>
+
+      {reportarRef && (
+        <ReportarModal
+          referencial={reportarRef}
+          onCerrar={() => setReportarRef(null)}
+          onEnviar={onReportar}
+        />
+      )}
     </div>
   )
 }

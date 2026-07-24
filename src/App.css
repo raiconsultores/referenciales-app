@@ -972,6 +972,20 @@ body {
 }
 .leaflet-popup-content strong { color: var(--primary); }
 
+.popup-reportar-btn {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s;
+}
+.popup-reportar-btn:hover { background: #fee2e2; }
+
 /* ============================================================
    Tabla — checkboxes + selección
    ============================================================ */

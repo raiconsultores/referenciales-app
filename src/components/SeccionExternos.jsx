@@ -194,6 +194,7 @@ export default function SeccionExternos({ flagsPendientesIds, onReportar }) {
           onCancelarAsignar={handleCancelarAsignar}
           onActualizarCoordenadas={handleActualizarCoordenadas}
           flagsPendientesIds={flagsPendientesIds}
+          onReportar={onReportar}
         />
       )}
 
