@@ -7,7 +7,7 @@ import EstadisticasPanel from './EstadisticasPanel'
 import FiltrosPanel from './FiltrosPanel'
 import ImportarCSV from './ImportarCSV'
 
-export default function SeccionExternos() {
+export default function SeccionExternos({ flagsPendientesIds, onReportar }) {
   const [referenciales, setReferenciales] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -180,6 +180,8 @@ export default function SeccionExternos() {
           onEliminar={handleEliminar}
           onAsignarCoordenadas={handleAsignarCoordenadas}
           onActualizarCoordenadas={handleActualizarCoordenadas}
+          flagsPendientesIds={flagsPendientesIds}
+          onReportar={onReportar}
         />
       )}
 

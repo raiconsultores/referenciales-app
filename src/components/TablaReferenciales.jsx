@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import DetalleReferencial from './DetalleReferencial'
+import ReportarModal from './ReportarModal'
 
 const fmtQ = (n) =>
   n != null
@@ -88,9 +89,13 @@ function exportarExcel(registros, nombreArchivo) {
   XLSX.writeFile(wb, nombreArchivo)
 }
 
-export default function TablaReferenciales({ referenciales, onEditar, onEliminar, onAsignarCoordenadas, onActualizarCoordenadas }) {
+export default function TablaReferenciales({
+  referenciales, onEditar, onEliminar, onAsignarCoordenadas, onActualizarCoordenadas,
+  flagsPendientesIds, onReportar,
+}) {
   const [seleccionados, setSeleccionados] = useState(new Set())
   const [detalleRef, setDetalleRef]       = useState(null)
+  const [reportarRef, setReportarRef]     = useState(null)
 
   // Limpiar selección cuando cambia la lista filtrada
   useEffect(() => { setSeleccionados(new Set()) }, [referenciales])
@@ -236,6 +241,11 @@ export default function TablaReferenciales({ referenciales, onEditar, onEliminar
                       title="Abrir en Google Maps"
                     ><IconExternal /></a>
                     <button
+                      className={`btn-icon icon-flag${flagsPendientesIds?.has(r.id) ? ' icon-flag-pendiente' : ''}`}
+                      onClick={() => setReportarRef(r)}
+                      title="Reportar problema"
+                    >🚩</button>
+                    <button
                       className="btn-icon icon-danger"
                       onClick={() => onEliminar(r.id)}
                       title="Eliminar"
@@ -253,6 +263,14 @@ export default function TablaReferenciales({ referenciales, onEditar, onEliminar
           referencial={detalleRef}
           onCerrar={() => setDetalleRef(null)}
           onActualizarCoordenadas={onActualizarCoordenadas}
+        />
+      )}
+
+      {reportarRef && (
+        <ReportarModal
+          referencial={reportarRef}
+          onCerrar={() => setReportarRef(null)}
+          onEnviar={onReportar}
         />
       )}
     </>

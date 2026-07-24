@@ -193,6 +193,18 @@ body {
 .btn-icon.icon-external:hover { color: var(--primary); background: #eff6ff; border-color: #bfdbfe; }
 .btn-icon.icon-danger:hover   { color: var(--danger);  background: #fee2e2; border-color: #fca5a5; }
 
+.btn-icon.icon-flag {
+  font-size: 12px;
+  opacity: .45;
+  filter: grayscale(1);
+}
+.btn-icon.icon-flag:hover { opacity: .8; filter: grayscale(.4); background: var(--bg); }
+.btn-icon.icon-flag-pendiente {
+  opacity: 1;
+  filter: none;
+}
+.btn-icon.icon-flag-pendiente:hover { background: #fee2e2; border-color: #fca5a5; }
+
 /* ============================================================
    Toolbar / Filters
    ============================================================ */
@@ -427,7 +439,47 @@ body {
 .coords-ok   { color: var(--success); display: inline-flex; align-items: center; }
 .coords-none { color: var(--border); }
 
+/* Reportes / flags */
+.estado-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.estado-pendiente { background: #fef3c7; color: #92400e; }
+.estado-revisado  { background: #dbeafe; color: #1e40af; }
+.estado-corregido { background: #dcfce7; color: #166534; }
+
+.header-flags-badge {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: var(--radius);
+  background: rgba(220,38,38,.25);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.header-flags-badge:hover { background: rgba(220,38,38,.4); }
+
+.seccion-tab-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .acciones-cell { white-space: nowrap; }
+.acciones-cell > * + * { margin-left: 4px; }
 
 .observaciones-cell {
   max-width: 180px;
@@ -548,6 +600,14 @@ body {
   max-width: 680px;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.modal-sm { max-width: 420px; }
+
+.reportar-target {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0 0 20px;
 }
 
 .formulario { padding: 28px 32px; }
