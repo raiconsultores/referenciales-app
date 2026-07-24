@@ -577,6 +577,11 @@ body {
   flex-shrink: 0;
 }
 
+.leyenda-dot-reportado {
+  background: transparent;
+  border: 2px solid #dc2626;
+}
+
 /* ============================================================
    Form (modal)
    ============================================================ */

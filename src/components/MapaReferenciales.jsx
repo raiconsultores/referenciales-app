@@ -12,22 +12,35 @@ const TIPO_COLORES = {
   Terreno:     '#ea580c',
 }
 
-function makeIcon(tipo, activo = false) {
+function makeIcon(tipo, activo = false, reportado = false) {
   const color = TIPO_COLORES[tipo] ?? '#6b7280'
   const s = activo ? 18 : 11
+  const pad = reportado ? 4 : 0
+  const total = s + pad * 2
   return L.divIcon({
     className: '',
     html: `<div style="
-      width:${s}px;height:${s}px;
-      background:${color};
-      border:2px solid #fff;
-      border-radius:50%;
-      box-shadow:0 2px 6px rgba(0,0,0,.45);
-      transition:transform .1s;
-    "></div>`,
-    iconSize:    [s, s],
-    iconAnchor:  [s / 2, s / 2],
-    popupAnchor: [0, -(s / 2) - 3],
+      position:relative;width:${total}px;height:${total}px;
+      display:flex;align-items:center;justify-content:center;
+    ">
+      ${reportado ? `<div style="
+        position:absolute;inset:0;
+        border:2px solid #dc2626;
+        border-radius:50%;
+        box-shadow:0 0 0 2px rgba(220,38,38,.3);
+      "></div>` : ''}
+      <div style="
+        width:${s}px;height:${s}px;
+        background:${color};
+        border:2px solid #fff;
+        border-radius:50%;
+        box-shadow:0 2px 6px rgba(0,0,0,.45);
+        transition:transform .1s;
+      "></div>
+    </div>`,
+    iconSize:    [total, total],
+    iconAnchor:  [total / 2, total / 2],
+    popupAnchor: [0, -(total / 2) - 3],
   })
 }
 
@@ -43,6 +56,7 @@ export default function MapaReferenciales({
   onMapaClick,
   onCancelarAsignar,
   onActualizarCoordenadas,
+  flagsPendientesIds,
 }) {
   const containerRef = useRef(null)
   const mapRef       = useRef(null)
@@ -97,13 +111,15 @@ export default function MapaReferenciales({
     referenciales.forEach(r => {
       if (r.lat == null || r.lng == null) return
       const activo = referencialActivo?.id === r.id
+      const reportado = flagsPendientesIds?.has(r.id) ?? false
       const marker = L.marker([r.lat, r.lng], {
-        icon: makeIcon(r.tipo, activo),
+        icon: makeIcon(r.tipo, activo, reportado),
         draggable: !modoAsignar,
         autoPan: true,
       }).addTo(map)
 
       const lines = [
+        reportado ? '<strong style="color:#dc2626">🚩 Reporte pendiente</strong>' : null,
         `<strong style="color:#1e40af">${r.tipo}</strong>`,
         `<strong>${r.zona}</strong> — ${r.direccion}`,
         `<strong>${fmtQ(r.precio_total) ?? '—'}</strong>`,
@@ -130,7 +146,7 @@ export default function MapaReferenciales({
       markersRef.current.push(marker)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referencialesKey, referencialActivo, modoAsignar, pendingDrag])
+  }, [referencialesKey, referencialActivo, modoAsignar, pendingDrag, flagsPendientesIds])
 
   // Fly to active referencial when assigning
   useEffect(() => {
@@ -195,6 +211,12 @@ export default function MapaReferenciales({
             {tipo}
           </span>
         ))}
+        {flagsPendientesIds?.size > 0 && (
+          <span className="leyenda-item">
+            <span className="leyenda-dot leyenda-dot-reportado" />
+            Con reporte pendiente
+          </span>
+        )}
       </div>
     </div>
   )
