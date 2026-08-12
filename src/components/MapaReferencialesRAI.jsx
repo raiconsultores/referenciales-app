@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { supabase } from '../supabaseClient'
 
 // Guatemala City center
 const GT_CENTER = [14.6349, -90.5069]
 const GT_ZOOM   = 11
+
+const FOTOS_BUCKET    = 'referenciales-rai-fotos'
+const SIGNED_URL_TTL  = 60 * 60 // 1 hora
 
 const TIPO_COLORES = {
   Casa:        '#2563eb',
@@ -38,6 +42,37 @@ const fmtQ = (n) =>
     ? `Q ${Math.round(n).toLocaleString('es-GT')}`
     : null
 
+function popupHtml(r, fotos) {
+  const lines = [
+    `<strong style="color:#1e40af">${r.tipo}</strong>`,
+    [r.colonia, r.zona, r.municipio].filter(Boolean).join(' — '),
+    `<strong>${fmtQ(r.precio_quetzales) ?? '—'}</strong>`,
+    r.m2_terreno      ? `Terreno: ${r.m2_terreno} m²  →  ${fmtQ(r.precio_m2_terreno) ?? '—'}/m²` : null,
+    r.m2_construccion ? `Constr.: ${r.m2_construccion} m²  →  ${fmtQ(r.precio_m2_construccion) ?? '—'}/m²` : null,
+    [
+      r.habitaciones != null ? `${r.habitaciones} hab.` : null,
+      r.banos != null        ? `${r.banos} baños`       : null,
+      r.parqueos != null     ? `${r.parqueos} parq.`    : null,
+    ].filter(Boolean).join(' · ') || null,
+    r.fecha_captura   ? `Fecha: ${r.fecha_captura}` : null,
+  ].filter(Boolean)
+
+  let fotosHtml = ''
+  if (fotos === undefined) {
+    fotosHtml = `<div style="margin-top:6px;font-size:11px;color:#94a3b8;">Cargando fotos…</div>`
+  } else if (Array.isArray(fotos) && fotos.length > 0) {
+    const miniaturas = fotos.slice(0, 4).map(f => `
+      <a href="${f.signedUrl}" target="_blank" rel="noreferrer">
+        <img src="${f.signedUrl}" loading="lazy"
+             style="width:52px;height:52px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;" />
+      </a>
+    `).join('')
+    fotosHtml = `<div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">${miniaturas}</div>`
+  }
+
+  return lines.join('<br/>') + fotosHtml
+}
+
 export default function MapaReferencialesRAI({
   referenciales,
   modoAsignar,
@@ -49,6 +84,7 @@ export default function MapaReferencialesRAI({
   const containerRef = useRef(null)
   const mapRef       = useRef(null)
   const markersRef   = useRef([])
+  const fotosCacheRef = useRef(new Map())
   const [pendingDrag, setPendingDrag] = useState(null)
 
   // Initialize map once
@@ -103,21 +139,25 @@ export default function MapaReferencialesRAI({
         autoPan: true,
       }).addTo(map)
 
-      const lines = [
-        `<strong style="color:#1e40af">${r.tipo}</strong>`,
-        [r.colonia, r.zona, r.municipio].filter(Boolean).join(' — '),
-        `<strong>${fmtQ(r.precio_quetzales) ?? '—'}</strong>`,
-        r.m2_terreno      ? `Terreno: ${r.m2_terreno} m²  →  ${fmtQ(r.precio_m2_terreno) ?? '—'}/m²` : null,
-        r.m2_construccion ? `Constr.: ${r.m2_construccion} m²  →  ${fmtQ(r.precio_m2_construccion) ?? '—'}/m²` : null,
-        [
-          r.habitaciones != null ? `${r.habitaciones} hab.` : null,
-          r.banos != null        ? `${r.banos} baños`       : null,
-          r.parqueos != null     ? `${r.parqueos} parq.`    : null,
-        ].filter(Boolean).join(' · ') || null,
-        r.fecha_captura   ? `Fecha: ${r.fecha_captura}` : null,
-      ].filter(Boolean)
+      marker.bindPopup(popupHtml(r, fotosCacheRef.current.get(r.id)), { maxWidth: 260 })
 
-      marker.bindPopup(lines.join('<br/>'), { maxWidth: 260 })
+      marker.on('popupopen', async () => {
+        if (fotosCacheRef.current.has(r.id)) return
+        const { data, error } = await supabase
+          .from('referenciales_rai_fotos')
+          .select('path, orden')
+          .eq('referencial_id', r.id)
+          .order('orden', { ascending: true })
+        const filas = error ? [] : (data || [])
+        const firmadas = await Promise.all(
+          filas.map(f => supabase.storage.from(FOTOS_BUCKET).createSignedUrl(f.path, SIGNED_URL_TTL))
+        )
+        const fotos = firmadas
+          .map(res => (res.error ? null : { signedUrl: res.data.signedUrl }))
+          .filter(Boolean)
+        fotosCacheRef.current.set(r.id, fotos)
+        marker.setPopupContent(popupHtml(r, fotos))
+      })
 
       marker.on('dragend', (e) => {
         const { lat, lng } = e.target.getLatLng()

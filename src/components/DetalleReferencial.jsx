@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { geocodificarDireccion } from '../utils/geocode'
+import GeocodeResultsPicker from './GeocodeResultsPicker'
 
 const GT_CENTER  = [14.6349, -90.5069]
 const ZOOM_GUIA  = 12
@@ -48,6 +49,7 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
   const [errorGuardar, setErrorGuardar] = useState(null)
   const [buscandoCoords, setBuscandoCoords] = useState(false)
   const [geoError, setGeoError]             = useState(null)
+  const [candidatos, setCandidatos]         = useState([])
 
   // Reiniciar el estado local al abrir un referencial distinto
   useEffect(() => {
@@ -57,6 +59,7 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
     setErrorGuardar(null)
     setBuscandoCoords(false)
     setGeoError(null)
+    setCandidatos([])
   }, [r?.id])
 
   // Crear el mapa una vez por referencial abierto
@@ -127,17 +130,24 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
   const original   = r.lat != null && r.lng != null ? [r.lat, r.lng] : null
   const haCambiado = !!pin && (!original || pin[0] !== original[0] || pin[1] !== original[1])
 
+  const aplicarResultado = (resultado) => {
+    setPin([resultado.lat, resultado.lng])
+    setGuardado(false)
+    setCandidatos([])
+  }
+
   const handleBuscarAutomatico = async () => {
     setBuscandoCoords(true)
     setGeoError(null)
     try {
       const query = [r.direccion, r.municipio, r.departamento, 'Guatemala'].filter(Boolean).join(', ')
-      const resultado = await geocodificarDireccion(query)
-      if (resultado) {
-        setPin([resultado.lat, resultado.lng])
-        setGuardado(false)
-      } else {
+      const resultados = await geocodificarDireccion(query)
+      if (resultados.length === 0) {
         setGeoError('No se encontró la dirección, puedes ajustar el pin manualmente')
+      } else if (resultados.length === 1) {
+        aplicarResultado(resultados[0])
+      } else {
+        setCandidatos(resultados)
       }
     } catch (err) {
       setGeoError(err?.message ?? 'Error al buscar la dirección')
@@ -161,6 +171,7 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
   }
 
   return (
+    <>
     <div
       className="modal-overlay"
       onClick={e => { if (e.target === e.currentTarget) onCerrar() }}
@@ -238,5 +249,13 @@ export default function DetalleReferencial({ referencial: r, onCerrar, onActuali
 
       </div>
     </div>
+    {candidatos.length > 0 && (
+      <GeocodeResultsPicker
+        resultados={candidatos}
+        onSeleccionar={aplicarResultado}
+        onCancelar={() => setCandidatos([])}
+      />
+    )}
+    </>
   )
 }

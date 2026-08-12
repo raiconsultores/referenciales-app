@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { inferirDeptMunicipio, extractZonaLimpia } from '../utils/geoUtils'
 import { geocodificarDireccion } from '../utils/geocode'
 import { parseCoords } from '../utils/coords'
+import GeocodeResultsPicker from './GeocodeResultsPicker'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno']
 
@@ -27,6 +28,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
   const [error, setError]           = useState(null)
   const [buscandoCoords, setBuscandoCoords] = useState(false)
   const [geoError, setGeoError]             = useState(null)
+  const [candidatos, setCandidatos]         = useState([])
 
   useEffect(() => {
     if (referencial) {
@@ -87,6 +89,12 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
     }
   }
 
+  const aplicarCoordenadas = (resultado) => {
+    setForm(prev => ({ ...prev, lat: resultado.lat, lng: resultado.lng }))
+    setCoordInput(`${resultado.lat}, ${resultado.lng}`)
+    setCandidatos([])
+  }
+
   const handleBuscarCoordenadas = async () => {
     if (!form.direccion.trim()) return
     setBuscandoCoords(true)
@@ -94,12 +102,13 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
     try {
       const { departamento, municipio } = inferirDeptMunicipio(form.descripcion)
       const query = [form.direccion, municipio, departamento, 'Guatemala'].filter(Boolean).join(', ')
-      const resultado = await geocodificarDireccion(query)
-      if (resultado) {
-        setForm(prev => ({ ...prev, lat: resultado.lat, lng: resultado.lng }))
-        setCoordInput(`${resultado.lat}, ${resultado.lng}`)
-      } else {
+      const resultados = await geocodificarDireccion(query)
+      if (resultados.length === 0) {
         setGeoError('No se encontró la dirección, puedes ajustar el pin manualmente')
+      } else if (resultados.length === 1) {
+        aplicarCoordenadas(resultados[0])
+      } else {
+        setCandidatos(resultados)
       }
     } catch (err) {
       setGeoError(err?.message ?? 'Error al buscar la dirección')
@@ -149,6 +158,7 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
   const { departamento: deptPreview, municipio: munPreview } = inferirDeptMunicipio(form.descripcion)
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="formulario">
       <h2>{referencial ? 'Editar Referencial' : 'Nuevo Referencial'}</h2>
 
@@ -334,5 +344,13 @@ export default function FormularioReferencial({ referencial, onGuardar, onCancel
         </button>
       </div>
     </form>
+    {candidatos.length > 0 && (
+      <GeocodeResultsPicker
+        resultados={candidatos}
+        onSeleccionar={aplicarCoordenadas}
+        onCancelar={() => setCandidatos([])}
+      />
+    )}
+    </>
   )
 }

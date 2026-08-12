@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { inferirDeptMunicipio } from '../utils/geoUtils'
 import { geocodificarDireccion } from '../utils/geocode'
 import { parseCoords } from '../utils/coords'
+import GeocodeResultsPicker from './GeocodeResultsPicker'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno', 'Comercio', 'Oficina']
 const ESTADOS = ['Excelente', 'Bueno', 'Regular', 'Malo']
@@ -44,6 +45,7 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
   const [error, setError]           = useState(null)
   const [buscandoCoords, setBuscandoCoords] = useState(false)
   const [geoError, setGeoError]             = useState(null)
+  const [candidatos, setCandidatos]         = useState([])
 
   useEffect(() => {
     if (referencial) {
@@ -127,6 +129,12 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
     }
   }
 
+  const aplicarCoordenadas = (resultado) => {
+    setForm(prev => ({ ...prev, lat: resultado.lat, lng: resultado.lng }))
+    setCoordInput(`${resultado.lat}, ${resultado.lng}`)
+    setCandidatos([])
+  }
+
   const handleBuscarCoordenadas = async () => {
     if (!form.direccion_original.trim()) return
     setBuscandoCoords(true)
@@ -134,12 +142,13 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
     try {
       const query = [form.direccion_original, form.colonia, form.municipio, form.departamento, 'Guatemala']
         .filter(Boolean).join(', ')
-      const resultado = await geocodificarDireccion(query)
-      if (resultado) {
-        setForm(prev => ({ ...prev, lat: resultado.lat, lng: resultado.lng }))
-        setCoordInput(`${resultado.lat}, ${resultado.lng}`)
-      } else {
+      const resultados = await geocodificarDireccion(query)
+      if (resultados.length === 0) {
         setGeoError('No se encontró la dirección, puedes ajustar el pin manualmente')
+      } else if (resultados.length === 1) {
+        aplicarCoordenadas(resultados[0])
+      } else {
+        setCandidatos(resultados)
       }
     } catch (err) {
       setGeoError(err?.message ?? 'Error al buscar la dirección')
@@ -200,6 +209,7 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
   const fmtPreview = (v) => v ? `Q ${parseInt(v).toLocaleString('es-GT')}` : ''
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="formulario">
       <h2>{referencial ? 'Editar Referencial RAI' : 'Nuevo Referencial RAI'}</h2>
 
@@ -424,5 +434,13 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
         </button>
       </div>
     </form>
+    {candidatos.length > 0 && (
+      <GeocodeResultsPicker
+        resultados={candidatos}
+        onSeleccionar={aplicarCoordenadas}
+        onCancelar={() => setCandidatos([])}
+      />
+    )}
+    </>
   )
 }

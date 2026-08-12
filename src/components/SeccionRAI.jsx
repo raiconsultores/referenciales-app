@@ -169,9 +169,6 @@ export default function SeccionRAI() {
       {!loading && vistaActiva === 'tabla' && (
         <TablaReferencialesRAI
           referenciales={referencialesFiltrados}
-          onEditar={handleEditar}
-          onEliminar={handleEliminar}
-          onAsignarCoordenadas={handleAsignarCoordenadas}
           onActualizarCoordenadas={handleActualizarCoordenadas}
         />
       )}

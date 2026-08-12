@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { geocodificarDireccion } from '../utils/geocode'
+import GeocodeResultsPicker from './GeocodeResultsPicker'
+import FotosReferencialRAI from './FotosReferencialRAI'
 
 const GT_CENTER  = [14.6349, -90.5069]
 const ZOOM_GUIA  = 12
@@ -23,8 +25,16 @@ function pinIcon() {
   })
 }
 
-const fmtQ  = (n) => n != null ? `Q ${parseFloat(n).toLocaleString('es-GT', { maximumFractionDigits: 0 })}` : '—'
-const fmtM2 = (n) => n != null ? `${parseFloat(n).toLocaleString('es-GT')} m²` : '—'
+const calleAvenidaNumero = (r) =>
+  r.calle_avenida_numero || [r.calle_avenida, r.numero].filter(Boolean).join(', ') || null
+
+const monedaPrecioOriginal = (r) => {
+  if (r.precio_original == null) return null
+  const monto = r.moneda === 'USD'
+    ? `$ ${parseFloat(r.precio_original).toLocaleString('en-US')}`
+    : `Q ${parseFloat(r.precio_original).toLocaleString('es-GT', { maximumFractionDigits: 0 })}`
+  return r.moneda ? `${r.moneda} ${monto}` : monto
+}
 
 function Campo({ label, value, full }) {
   return (
@@ -48,6 +58,7 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
   const [errorGuardar, setErrorGuardar] = useState(null)
   const [buscandoCoords, setBuscandoCoords] = useState(false)
   const [geoError, setGeoError]             = useState(null)
+  const [candidatos, setCandidatos]         = useState([])
 
   // Reiniciar el estado local al abrir un referencial distinto
   useEffect(() => {
@@ -57,6 +68,7 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
     setErrorGuardar(null)
     setBuscandoCoords(false)
     setGeoError(null)
+    setCandidatos([])
   }, [r?.id])
 
   // Crear el mapa una vez por referencial abierto
@@ -127,17 +139,24 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
   const original   = r.lat != null && r.lng != null ? [r.lat, r.lng] : null
   const haCambiado = !!pin && (!original || pin[0] !== original[0] || pin[1] !== original[1])
 
+  const aplicarResultado = (resultado) => {
+    setPin([resultado.lat, resultado.lng])
+    setGuardado(false)
+    setCandidatos([])
+  }
+
   const handleBuscarAutomatico = async () => {
     setBuscandoCoords(true)
     setGeoError(null)
     try {
       const query = [r.direccion_original, r.colonia, r.municipio, r.departamento, 'Guatemala'].filter(Boolean).join(', ')
-      const resultado = await geocodificarDireccion(query)
-      if (resultado) {
-        setPin([resultado.lat, resultado.lng])
-        setGuardado(false)
-      } else {
+      const resultados = await geocodificarDireccion(query)
+      if (resultados.length === 0) {
         setGeoError('No se encontró la dirección, puedes ajustar el pin manualmente')
+      } else if (resultados.length === 1) {
+        aplicarResultado(resultados[0])
+      } else {
+        setCandidatos(resultados)
       }
     } catch (err) {
       setGeoError(err?.message ?? 'Error al buscar la dirección')
@@ -161,6 +180,7 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
   }
 
   return (
+    <>
     <div
       className="modal-overlay"
       onClick={e => { if (e.target === e.currentTarget) onCerrar() }}
@@ -217,45 +237,44 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
         {geoError && <div className="form-error">{geoError}</div>}
 
         <div className="detalle-grid">
-          <Campo label="No. Avalúo"          value={r.no_avaluo} />
-          <Campo label="Fecha Captura"       value={r.fecha_captura} />
-          <Campo label="Dirección Original"  value={r.direccion_original} full />
-          <Campo label="Calle/Avenida"       value={r.calle_avenida} />
-          <Campo label="Número"              value={r.numero} />
-          <Campo label="Colonia"             value={r.colonia} />
-          <Campo label="Zona"                value={r.zona} />
-          <Campo label="Departamento"        value={r.departamento} />
-          <Campo label="Municipio"           value={r.municipio} />
-          <Campo label="m² Terreno"          value={fmtM2(r.m2_terreno)} />
-          <Campo label="m² Construcción"     value={fmtM2(r.m2_construccion)} />
-          <Campo label="Habitaciones"        value={r.habitaciones} />
-          <Campo label="Baños"               value={r.banos} />
-          <Campo label="Parqueos"            value={r.parqueos} />
-          <Campo label="Antigüedad"          value={r.antiguedad != null ? `${r.antiguedad} años` : null} />
-          <Campo label="Estado Conservación" value={r.estado_conservacion} />
-          <Campo label="Moneda"              value={r.moneda} />
-          <Campo label="Precio Original"     value={r.moneda === 'USD' ? `$ ${parseFloat(r.precio_original ?? 0).toLocaleString('en-US')}` : fmtQ(r.precio_original)} />
+          <Campo label="No. de Avalúo Vinculado"    value={r.no_avaluo} full />
+          <Campo label="Dirección Original Completa" value={r.direccion_original} full />
+          <Campo label="Calle/Avenida, Número"      value={calleAvenidaNumero(r)} />
+          <Campo label="Departamento"                value={r.departamento} />
+          <Campo label="Habitaciones"                value={r.habitaciones} />
+          <Campo label="Baños"                       value={r.banos} />
+          <Campo label="Parqueos"                     value={r.parqueos} />
+          <Campo label="Antigüedad"                  value={r.antiguedad != null ? `${r.antiguedad} años` : null} />
+          <Campo label="Estado de Conservación"      value={r.estado_conservacion} />
+          <Campo label="Moneda y Precio Original"    value={monedaPrecioOriginal(r)} />
           {r.moneda === 'USD' && <Campo label="Tipo de Cambio" value={r.tipo_cambio} />}
-          <Campo label="Precio (Q)"          value={fmtQ(r.precio_quetzales)} />
-          <Campo label="Q/m² Terreno"        value={fmtQ(r.precio_m2_terreno)} />
-          <Campo label="Q/m² Construcción"   value={fmtQ(r.precio_m2_construccion)} />
-          {pin && (
-            <Campo label="Coordenadas" value={`${pin[0]}, ${pin[1]}`} />
-          )}
           <Campo label="Fuente"    value={r.fuente} />
-          <Campo label="Contacto" value={r.contacto} />
+          <Campo label="Contacto / Teléfono" value={r.contacto} />
           {r.url && (
             <div className="detalle-campo detalle-campo-full">
-              <span className="detalle-label">URL</span>
+              <span className="detalle-label">URL / Referencia</span>
               <a className="detalle-value" href={r.url} target="_blank" rel="noreferrer">{r.url}</a>
             </div>
           )}
           {r.observaciones && (
             <Campo label="Observaciones" value={r.observaciones} full />
           )}
+
+          <div className="detalle-campo detalle-campo-full">
+            <span className="detalle-label">Fotos</span>
+            <FotosReferencialRAI referencialId={r.id} key={r.id} />
+          </div>
         </div>
 
       </div>
     </div>
+    {candidatos.length > 0 && (
+      <GeocodeResultsPicker
+        resultados={candidatos}
+        onSeleccionar={aplicarResultado}
+        onCancelar={() => setCandidatos([])}
+      />
+    )}
+    </>
   )
 }

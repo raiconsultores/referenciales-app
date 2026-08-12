@@ -16,6 +16,7 @@
   --bodega:        #4e4d4c;
   --comercio:       #9333ea;
   --oficina:        #0891b2;
+  --otros:          #db2777;
 
   --bg:             #f1f5f9;
   --surface:        #ffffff;
@@ -434,6 +435,7 @@ body {
 .tipo-bodega      { background: var(--bodega); }
 .tipo-comercio     { background: var(--comercio); }
 .tipo-oficina      { background: var(--oficina); }
+.tipo-otros        { background: var(--otros); }
 
 
 .coords-ok   { color: var(--success); display: inline-flex; align-items: center; }
@@ -722,6 +724,53 @@ body {
   margin-top: 4px;
   color: var(--text-muted, #6b7280);
   font-size: 12px;
+}
+
+.geocode-picker-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: -8px 0 0;
+}
+
+.geocode-picker-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.geocode-picker-item {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.geocode-picker-item:hover {
+  border-color: var(--border-focus);
+  background: #eff6ff;
+}
+
+.geocode-picker-name {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.geocode-picker-coords {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .coord-error {
@@ -1165,6 +1214,73 @@ body {
 }
 
 /* ============================================================
+   Fotos (Referenciales RAI)
+   ============================================================ */
+.fotos-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.fotos-header {
+  display: flex;
+  align-items: center;
+}
+
+.fotos-header button svg,
+.fotos-header button .spinner {
+  margin-right: 6px;
+}
+
+.fotos-vacio {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.fotos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.fotos-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.fotos-item img,
+.fotos-item-sin-url {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fotos-item-eliminar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(15,23,42,.65);
+  color: #fff;
+  cursor: pointer;
+  transition: background .15s;
+}
+.fotos-item-eliminar:hover { background: var(--danger); }
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 640px) {
@@ -1175,6 +1291,7 @@ body {
   .filtro-input  { width: 100%; }
   .filtro-select { width: 100%; }
   .filtros-panel { flex-direction: column; }
+  .fotos-grid { grid-template-columns: repeat(2, 1fr); }
   .mapa-container { height: 400px; }
   .detalle-modal { width: 100%; }
   .detalle-grid  { grid-template-columns: 1fr; }
