@@ -276,6 +276,29 @@ body {
   box-shadow: 0 0 0 3px rgba(147,197,253,.35);
 }
 
+.filtro-busqueda {
+  position: relative;
+  display: flex;
+}
+.filtro-input-busqueda {
+  padding-right: 34px;
+}
+.btn-buscar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 36px;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.btn-buscar:hover { color: var(--primary); }
+
 .btn-clear {
   height: 36px;
   padding: 0 12px;
@@ -1291,6 +1314,7 @@ body {
   .filtro-input  { width: 100%; }
   .filtro-select { width: 100%; }
   .filtros-panel { flex-direction: column; }
+  .filtro-busqueda { width: 100%; }
   .fotos-grid { grid-template-columns: repeat(2, 1fr); }
   .mapa-container { height: 400px; }
   .detalle-modal { width: 100%; }

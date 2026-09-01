@@ -1,13 +1,24 @@
+import { useRef } from 'react'
+
 const TIPOS = ['Casa', 'Apartamento', 'Terreno', 'Comercio', 'Oficina']
 
+const IconSearch = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="6" cy="6" r="4.5" />
+    <path d="M12.5 12.5L9.5 9.5" />
+  </svg>
+)
+
 export default function FiltrosPanelRAI({
+  filtroTexto, setFiltroTexto,
   filtroTipo, setFiltroTipo,
   filtroZona, setFiltroZona,
   filtroDepartamento, setFiltroDepartamento,
   filtroMunicipio, setFiltroMunicipio,
   referenciales,
 }) {
-  const hasFiltro = filtroTipo || filtroZona || filtroDepartamento || filtroMunicipio
+  const inputBusquedaRef = useRef(null)
+  const hasFiltro = filtroTexto || filtroTipo || filtroZona || filtroDepartamento || filtroMunicipio
 
   const departamentos = [...new Set(
     referenciales.map(r => r.departamento).filter(Boolean)
@@ -44,6 +55,26 @@ export default function FiltrosPanelRAI({
     <div className="filtros-panel">
 
       <div className="filtros-fila">
+        <div className="filtro-busqueda">
+          <input
+            ref={inputBusquedaRef}
+            type="text"
+            value={filtroTexto}
+            onChange={e => setFiltroTexto(e.target.value)}
+            placeholder="Buscar por dirección, colonia, no. avalúo…"
+            className="filtro-input filtro-input-busqueda"
+          />
+          <button
+            type="button"
+            className="btn-buscar"
+            title="Buscar"
+            tabIndex={-1}
+            onClick={() => inputBusquedaRef.current?.focus()}
+          >
+            <IconSearch />
+          </button>
+        </div>
+
         <select
           value={filtroTipo}
           onChange={e => setFiltroTipo(e.target.value)}
@@ -67,6 +98,7 @@ export default function FiltrosPanelRAI({
         {hasFiltro && (
           <button
             onClick={() => {
+              setFiltroTexto('')
               setFiltroTipo('')
               setFiltroZona('')
               setFiltroDepartamento('')

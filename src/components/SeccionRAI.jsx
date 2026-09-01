@@ -12,6 +12,7 @@ export default function SeccionRAI() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  const [filtroTexto, setFiltroTexto]             = useState('')
   const [filtroTipo, setFiltroTipo]               = useState('')
   const [filtroZona, setFiltroZona]               = useState('')
   const [filtroDepartamento, setFiltroDepartamento] = useState('')
@@ -40,11 +41,19 @@ export default function SeccionRAI() {
   useEffect(() => { cargarReferenciales() }, [cargarReferenciales])
 
   const referencialesFiltrados = referenciales.filter(r => {
+    const texto = filtroTexto.trim().toLowerCase()
+    const coincideTexto = !texto ||
+      r.direccion_original?.toLowerCase().includes(texto) ||
+      r.colonia?.toLowerCase().includes(texto) ||
+      r.no_avaluo?.toLowerCase().includes(texto) ||
+      r.contacto?.toLowerCase().includes(texto) ||
+      r.fuente?.toLowerCase().includes(texto) ||
+      r.observaciones?.toLowerCase().includes(texto)
     const coincideTipo         = !filtroTipo         || r.tipo         === filtroTipo
     const coincideZona         = !filtroZona         || r.zona         === filtroZona
     const coincideDepartamento = !filtroDepartamento || r.departamento === filtroDepartamento
     const coincideMunicipio    = !filtroMunicipio    || r.municipio    === filtroMunicipio
-    return coincideTipo && coincideZona && coincideDepartamento && coincideMunicipio
+    return coincideTexto && coincideTipo && coincideZona && coincideDepartamento && coincideMunicipio
   })
 
   const handleMapaClick = async (lat, lng) => {
@@ -124,6 +133,8 @@ export default function SeccionRAI() {
 
       <div className="toolbar">
         <FiltrosPanelRAI
+          filtroTexto={filtroTexto}
+          setFiltroTexto={setFiltroTexto}
           filtroTipo={filtroTipo}
           setFiltroTipo={setFiltroTipo}
           filtroZona={filtroZona}
