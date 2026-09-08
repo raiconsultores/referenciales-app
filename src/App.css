@@ -393,6 +393,9 @@ body {
   color: var(--text-muted);
 }
 
+.tabla-scroll-top { overflow-x: auto; overflow-y: hidden; height: 14px; }
+.tabla-scroll-top > div { height: 1px; }
+
 .tabla-scroll { overflow-x: auto; }
 
 .tabla {
@@ -1077,6 +1080,33 @@ body {
   background: #eff6ff !important;
 }
 .fila-seleccionada:hover {
+  background: #dbeafe !important;
+}
+
+/* ============================================================
+   Tabla — columna de Acciones fija a la derecha
+   ============================================================ */
+.tabla th.col-acciones,
+.tabla td.col-acciones {
+  position: sticky;
+  right: 0;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, .06);
+}
+.tabla th.col-acciones {
+  background: #f8fafc;
+  z-index: 2;
+}
+.tabla td.col-acciones {
+  background: var(--surface);
+  z-index: 1;
+}
+.tabla tbody tr:hover td.col-acciones {
+  background: #f8fafc;
+}
+.fila-seleccionada td.col-acciones {
+  background: #eff6ff !important;
+}
+.fila-seleccionada:hover td.col-acciones {
   background: #dbeafe !important;
 }
 

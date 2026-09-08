@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import * as XLSX from 'xlsx'
 import DetalleReferencialRAI from './DetalleReferencialRAI'
 
@@ -76,6 +76,12 @@ function exportarExcel(registros, nombreArchivo) {
 export default function TablaReferencialesRAI({ referenciales, onActualizarCoordenadas }) {
   const [seleccionados, setSeleccionados] = useState(new Set())
   const [detalleRef, setDetalleRef]       = useState(null)
+  const [anchoTabla, setAnchoTabla]       = useState(0)
+
+  const topScrollRef   = useRef(null)
+  const tablaScrollRef = useRef(null)
+  const tablaRef       = useRef(null)
+  const sincronizando  = useRef(false)
 
   useEffect(() => { setSeleccionados(new Set()) }, [referenciales])
 
@@ -84,6 +90,27 @@ export default function TablaReferencialesRAI({ referenciales, onActualizarCoord
     const actualizado = referenciales.find(r => r.id === detalleRef.id)
     if (actualizado) setDetalleRef(actualizado)
   }, [referenciales])
+
+  useLayoutEffect(() => {
+    const actualizarAncho = () => {
+      if (tablaRef.current) setAnchoTabla(tablaRef.current.scrollWidth)
+    }
+    actualizarAncho()
+    window.addEventListener('resize', actualizarAncho)
+    return () => window.removeEventListener('resize', actualizarAncho)
+  }, [referenciales])
+
+  const sincronizarDesdeArriba = () => {
+    if (sincronizando.current) { sincronizando.current = false; return }
+    sincronizando.current = true
+    tablaScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft
+  }
+
+  const sincronizarDesdeAbajo = () => {
+    if (sincronizando.current) { sincronizando.current = false; return }
+    sincronizando.current = true
+    topScrollRef.current.scrollLeft = tablaScrollRef.current.scrollLeft
+  }
 
   const todosSeleccionados = referenciales.length > 0 &&
     referenciales.every(r => seleccionados.has(r.id))
@@ -134,8 +161,12 @@ export default function TablaReferencialesRAI({ referenciales, onActualizarCoord
           </button>
         </div>
 
-        <div className="tabla-scroll">
-          <table className="tabla">
+        <div className="tabla-scroll-top" ref={topScrollRef} onScroll={sincronizarDesdeArriba}>
+          <div style={{ width: anchoTabla, height: 1 }} />
+        </div>
+
+        <div className="tabla-scroll" ref={tablaScrollRef} onScroll={sincronizarDesdeAbajo}>
+          <table className="tabla" ref={tablaRef}>
             <thead>
               <tr>
                 <th className="col-check">
@@ -156,7 +187,7 @@ export default function TablaReferencialesRAI({ referenciales, onActualizarCoord
                 <th className="num">Q/m² Terreno</th>
                 <th className="num">Q/m² Construcción</th>
                 <th>Fecha</th>
-                <th>Acciones</th>
+                <th className="col-acciones">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -188,7 +219,7 @@ export default function TablaReferencialesRAI({ referenciales, onActualizarCoord
                   <td className="num">{fmtQ(r.precio_m2_terreno)}</td>
                   <td className="num">{fmtQ(r.precio_m2_construccion)}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{r.fecha_captura || '—'}</td>
-                  <td className="acciones-cell" onClick={e => e.stopPropagation()}>
+                  <td className="acciones-cell col-acciones" onClick={e => e.stopPropagation()}>
                     <a
                       className="btn-icon icon-external"
                       href={googleMapsUrl(r)}
