@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
+import { comprimirImagen, fmtBytes } from '../utils/imageCompression'
 
 const BUCKET = 'referenciales-rai-fotos'
 const MAX_BYTES = 10 * 1024 * 1024
@@ -37,6 +38,7 @@ export default function FotosReferencialRAI({ referencialId }) {
   const [cargando, setCargando] = useState(true)
   const [subiendo, setSubiendo] = useState(null)
   const [error, setError]       = useState(null)
+  const [resultadosCompresion, setResultadosCompresion] = useState([])
   const inputRef = useRef(null)
 
   const cargarFotos = useCallback(async () => {
@@ -52,7 +54,11 @@ export default function FotosReferencialRAI({ referencialId }) {
     setCargando(false)
   }, [referencialId])
 
-  useEffect(() => { cargarFotos() }, [cargarFotos])
+  useEffect(() => {
+    cargarFotos()
+    setResultadosCompresion([])
+    setError(null)
+  }, [cargarFotos])
 
   const handleSeleccionArchivos = async (e) => {
     const archivos = Array.from(e.target.files || [])
@@ -60,12 +66,12 @@ export default function FotosReferencialRAI({ referencialId }) {
     if (archivos.length === 0) return
 
     setError(null)
+    setResultadosCompresion([])
     let siguienteOrden = fotos.reduce((max, f) => Math.max(max, f.orden ?? 0), 0) + 1
     let hayNuevas = false
 
     for (let i = 0; i < archivos.length; i++) {
       const file = archivos[i]
-      setSubiendo({ actual: i + 1, total: archivos.length })
 
       if (!esArchivoValido(file)) {
         setError(`"${file.name}" no es un formato válido (solo JPG, PNG o HEIC).`)
@@ -76,13 +82,19 @@ export default function FotosReferencialRAI({ referencialId }) {
         continue
       }
 
+      setSubiendo({ actual: i + 1, total: archivos.length, etapa: 'comprimiendo' })
+      const { file: archivoFinal, originalSize, compressedSize, comprimido } = await comprimirImagen(file)
+      setResultadosCompresion(prev => [...prev, { nombre: file.name, originalSize, compressedSize, comprimido }])
+
+      setSubiendo({ actual: i + 1, total: archivos.length, etapa: 'subiendo' })
+
       try {
         const ext = file.name.slice(file.name.lastIndexOf('.')) || ''
         const path = `${referencialId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`
 
         const { error: errorSubida } = await supabase.storage
           .from(BUCKET)
-          .upload(path, file, { cacheControl: '3600', upsert: false })
+          .upload(path, archivoFinal, { cacheControl: '3600', upsert: false })
         if (errorSubida) throw errorSubida
 
         const { error: errorInsert } = await supabase
@@ -133,7 +145,9 @@ export default function FotosReferencialRAI({ referencialId }) {
           disabled={!!subiendo}
         >
           {subiendo && <span className="spinner spinner-dark" />}
-          {subiendo ? `Subiendo ${subiendo.actual}/${subiendo.total}…` : '+ Agregar foto'}
+          {subiendo
+            ? `${subiendo.etapa === 'comprimiendo' ? 'Comprimiendo' : 'Subiendo'} ${subiendo.actual}/${subiendo.total}…`
+            : '+ Agregar foto'}
         </button>
         <input
           ref={inputRef}
@@ -146,6 +160,28 @@ export default function FotosReferencialRAI({ referencialId }) {
       </div>
 
       {error && <div className="form-error">{error}</div>}
+
+      {resultadosCompresion.length > 0 && (
+        <ul className="fotos-compresion">
+          {resultadosCompresion.map((r, i) => (
+            <li key={i} className="fotos-compresion-item">
+              <span className="fotos-compresion-nombre" title={r.nombre}>{r.nombre}</span>
+              {r.comprimido ? (
+                <span>
+                  <span className="fotos-compresion-original">{fmtBytes(r.originalSize)}</span>
+                  {' → '}
+                  <span className="fotos-compresion-final">{fmtBytes(r.compressedSize)}</span>
+                  <span className="fotos-compresion-ahorro">
+                    −{Math.round((1 - r.compressedSize / r.originalSize) * 100)}%
+                  </span>
+                </span>
+              ) : (
+                <span className="fotos-compresion-final">{fmtBytes(r.originalSize)} (sin cambios)</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {cargando ? (
         <div className="fotos-vacio">Cargando fotos…</div>

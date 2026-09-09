@@ -1422,6 +1422,51 @@ h1, h2, h3, h4 { font-family: var(--font); font-weight: 700; }
   padding: 4px 0;
 }
 
+.fotos-compresion {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  margin: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.fotos-compresion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.fotos-compresion-nombre {
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+}
+.fotos-compresion-original {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.fotos-compresion-final {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.fotos-compresion-ahorro {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(16,185,129,.12);
+  color: var(--success);
+  font-weight: 700;
+  font-size: 11px;
+}
+
 .fotos-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
