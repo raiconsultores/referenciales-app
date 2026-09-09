@@ -32,6 +32,14 @@ const IconX = () => (
   </svg>
 )
 
+const IconImagen = () => (
+  <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="20" height="18" rx="2.5" />
+    <circle cx="9" cy="10.5" r="2" />
+    <path d="M3 18L9.5 12.5L14 16.5L18 13L23 17.5" />
+  </svg>
+)
+
 export default function FotosReferencialRAI({ referencialId }) {
   const [fotos, setFotos]       = useState([])
   const [urls, setUrls]         = useState({})
@@ -39,7 +47,9 @@ export default function FotosReferencialRAI({ referencialId }) {
   const [subiendo, setSubiendo] = useState(null)
   const [error, setError]       = useState(null)
   const [resultadosCompresion, setResultadosCompresion] = useState([])
+  const [arrastrando, setArrastrando] = useState(false)
   const inputRef = useRef(null)
+  const dragCounter = useRef(0)
 
   const cargarFotos = useCallback(async () => {
     setCargando(true)
@@ -60,9 +70,8 @@ export default function FotosReferencialRAI({ referencialId }) {
     setError(null)
   }, [cargarFotos])
 
-  const handleSeleccionArchivos = async (e) => {
-    const archivos = Array.from(e.target.files || [])
-    e.target.value = ''
+  const procesarArchivos = async (fileList) => {
+    const archivos = Array.from(fileList || [])
     if (archivos.length === 0) return
 
     setError(null)
@@ -118,6 +127,38 @@ export default function FotosReferencialRAI({ referencialId }) {
     if (hayNuevas) await cargarFotos()
   }
 
+  const handleSeleccionArchivos = (e) => {
+    const archivos = e.target.files
+    e.target.value = ''
+    procesarArchivos(archivos)
+  }
+
+  const handleDragEnter = (e) => {
+    e.preventDefault()
+    if (subiendo) return
+    dragCounter.current += 1
+    setArrastrando(true)
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    if (subiendo) return
+    dragCounter.current = Math.max(0, dragCounter.current - 1)
+    if (dragCounter.current === 0) setArrastrando(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    dragCounter.current = 0
+    setArrastrando(false)
+    if (subiendo) return
+    procesarArchivos(e.dataTransfer.files)
+  }
+
   const handleEliminar = async (foto) => {
     if (!window.confirm('¿Eliminar esta foto?')) return
     setError(null)
@@ -137,18 +178,37 @@ export default function FotosReferencialRAI({ referencialId }) {
 
   return (
     <div className="fotos-seccion">
-      <div className="fotos-header">
-        <button
-          type="button"
-          className="btn btn-sm btn-outline"
-          onClick={() => inputRef.current?.click()}
-          disabled={!!subiendo}
-        >
-          {subiendo && <span className="spinner spinner-dark" />}
-          {subiendo
-            ? `${subiendo.etapa === 'comprimiendo' ? 'Comprimiendo' : 'Subiendo'} ${subiendo.actual}/${subiendo.total}…`
-            : '+ Agregar foto'}
-        </button>
+      <div
+        className={`fotos-dropzone${arrastrando ? ' fotos-dropzone-activa' : ''}${subiendo ? ' fotos-dropzone-disabled' : ''}`}
+        onClick={() => !subiendo && inputRef.current?.click()}
+        onKeyDown={e => {
+          if (!subiendo && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            inputRef.current?.click()
+          }
+        }}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        role="button"
+        tabIndex={0}
+        aria-label="Arrastra tus fotos aquí o haz clic para seleccionar"
+      >
+        {subiendo ? (
+          <>
+            <span className="spinner spinner-dark" />
+            <span className="fotos-dropzone-texto">
+              {subiendo.etapa === 'comprimiendo' ? 'Comprimiendo' : 'Subiendo'} {subiendo.actual}/{subiendo.total}…
+            </span>
+          </>
+        ) : (
+          <>
+            <IconImagen />
+            <span className="fotos-dropzone-texto">Arrastra tus fotos aquí</span>
+            <span className="fotos-dropzone-subtexto">o haz clic para seleccionar</span>
+          </>
+        )}
         <input
           ref={inputRef}
           type="file"
