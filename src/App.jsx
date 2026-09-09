@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient'
 import SeccionExternos from './components/SeccionExternos'
 import SeccionRAI from './components/SeccionRAI'
 import SeccionReportes from './components/SeccionReportes'
+import SeccionDashboardRAI from './components/SeccionDashboardRAI'
 import LoginScreen from './components/LoginScreen'
 
 const IconLogo = () => (
@@ -34,6 +35,14 @@ const IconReportes = () => (
   <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M4.5 2.5V17.5" />
     <path d="M4.5 3.5H14.5L12.5 6.5L14.5 9.5H4.5" />
+  </svg>
+)
+
+const IconDashboard = () => (
+  <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 14.5L7.5 9L11 12L17 5" />
+    <path d="M3 17.5H17" />
+    <path d="M3 3V17.5" />
   </svg>
 )
 
@@ -127,6 +136,13 @@ export default function App() {
 
         <nav className="sidebar-nav">
           <button
+            className={`sidebar-link ${seccionActiva === 'dashboard' ? 'sidebar-link-activo' : ''}`}
+            onClick={() => setSeccionActiva('dashboard')}
+          >
+            <IconDashboard />
+            <span>Dashboard</span>
+          </button>
+          <button
             className={`sidebar-link ${seccionActiva === 'externos' ? 'sidebar-link-activo' : ''}`}
             onClick={() => setSeccionActiva('externos')}
           >
@@ -176,6 +192,7 @@ export default function App() {
         </header>
 
         <main className="app-main">
+          {seccionActiva === 'dashboard' && <SeccionDashboardRAI />}
           {seccionActiva === 'externos' && (
             <SeccionExternos
               flagsPendientesIds={flagsPendientesIds}
