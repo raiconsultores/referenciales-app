@@ -4,6 +4,14 @@ import 'leaflet/dist/leaflet.css'
 import { geocodificarDireccion } from '../utils/geocode'
 import GeocodeResultsPicker from './GeocodeResultsPicker'
 import FotosReferencialRAI from './FotosReferencialRAI'
+import FormularioReferencialRAI from './FormularioReferencialRAI'
+
+const IconEditar = () => (
+  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" />
+    <path d="M8 4L10 6" />
+  </svg>
+)
 
 const GT_CENTER  = [14.6349, -90.5069]
 const ZOOM_GUIA  = 12
@@ -45,7 +53,7 @@ function Campo({ label, value, full }) {
   )
 }
 
-export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActualizarCoordenadas }) {
+export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActualizarCoordenadas, onRecargar }) {
   const mapDivRef   = useRef(null)
   const mapInstance = useRef(null)
   const markerRef   = useRef(null)
@@ -59,6 +67,7 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
   const [buscandoCoords, setBuscandoCoords] = useState(false)
   const [geoError, setGeoError]             = useState(null)
   const [candidatos, setCandidatos]         = useState([])
+  const [modoEdicion, setModoEdicion]       = useState(false)
 
   // Reiniciar el estado local al abrir un referencial distinto
   useEffect(() => {
@@ -69,6 +78,7 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
     setBuscandoCoords(false)
     setGeoError(null)
     setCandidatos([])
+    setModoEdicion(false)
   }, [r?.id])
 
   // Crear el mapa una vez por referencial abierto
@@ -179,6 +189,11 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
     }
   }
 
+  const handleGuardadoEdicion = async () => {
+    if (onRecargar) await onRecargar()
+    setModoEdicion(false)
+  }
+
   return (
     <>
     <div
@@ -192,79 +207,99 @@ export default function DetalleReferencialRAI({ referencial: r, onCerrar, onActu
             <span className={`tipo-badge tipo-${r.tipo?.toLowerCase()}`}>{r.tipo}</span>
             <h2 className="detalle-titulo">{r.colonia || r.direccion_original || 'Referencial RAI'}</h2>
           </div>
-          <button onClick={onCerrar} className="btn-close" aria-label="Cerrar">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-              <path d="M1 1L11 11M11 1L1 11"/>
-            </svg>
-          </button>
-        </div>
-
-        <div className="detalle-mapa-wrapper">
-          <div className="detalle-mapa" ref={mapDivRef} />
-          {!pin && (
-            <div className="detalle-mapa-hint">Haz clic en el mapa para asignar ubicación</div>
-          )}
-        </div>
-
-        <div className="detalle-mapa-acciones">
-          {pin ? (
-            <>
-              <span className="detalle-mapa-coords">{pin[0].toFixed(6)}, {pin[1].toFixed(6)}</span>
-              {haCambiado ? (
-                <button
-                  className="btn btn-sm btn-primary"
-                  onClick={handleGuardarUbicacion}
-                  disabled={guardando}
-                >
-                  {guardando ? 'Guardando…' : 'Guardar ubicación'}
-                </button>
-              ) : guardado && (
-                <span className="detalle-mapa-ok">✓ Ubicación guardada</span>
-              )}
-            </>
-          ) : (
-            <button
-              className="btn btn-sm btn-outline"
-              onClick={handleBuscarAutomatico}
-              disabled={buscandoCoords}
-            >
-              {buscandoCoords && <span className="spinner spinner-dark" />}
-              {buscandoCoords ? 'Buscando…' : 'Buscar coordenadas automáticamente'}
+          <div className="detalle-header-actions">
+            {!modoEdicion && (
+              <button onClick={() => setModoEdicion(true)} className="btn-editar-detalle">
+                <IconEditar /> Editar
+              </button>
+            )}
+            <button onClick={onCerrar} className="btn-close" aria-label="Cerrar">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                <path d="M1 1L11 11M11 1L1 11"/>
+              </svg>
             </button>
-          )}
-        </div>
-        {errorGuardar && <div className="form-error">{errorGuardar}</div>}
-        {geoError && <div className="form-error">{geoError}</div>}
-
-        <div className="detalle-grid">
-          <Campo label="No. de Avalúo Vinculado"    value={r.no_avaluo} full />
-          <Campo label="Dirección Original Completa" value={r.direccion_original} full />
-          <Campo label="Calle/Avenida, Número"      value={calleAvenidaNumero(r)} />
-          <Campo label="Departamento"                value={r.departamento} />
-          <Campo label="Habitaciones"                value={r.habitaciones} />
-          <Campo label="Baños"                       value={r.banos} />
-          <Campo label="Parqueos"                     value={r.parqueos} />
-          <Campo label="Antigüedad"                  value={r.antiguedad != null ? `${r.antiguedad} años` : null} />
-          <Campo label="Estado de Conservación"      value={r.estado_conservacion} />
-          <Campo label="Moneda y Precio Original"    value={monedaPrecioOriginal(r)} />
-          {r.moneda === 'USD' && <Campo label="Tipo de Cambio" value={r.tipo_cambio} />}
-          <Campo label="Fuente"    value={r.fuente} />
-          <Campo label="Contacto / Teléfono" value={r.contacto} />
-          {r.url && (
-            <div className="detalle-campo detalle-campo-full">
-              <span className="detalle-label">URL / Referencia</span>
-              <a className="detalle-value" href={r.url} target="_blank" rel="noreferrer">{r.url}</a>
-            </div>
-          )}
-          {r.observaciones && (
-            <Campo label="Observaciones" value={r.observaciones} full />
-          )}
-
-          <div className="detalle-campo detalle-campo-full">
-            <span className="detalle-label">Fotos</span>
-            <FotosReferencialRAI referencialId={r.id} key={r.id} />
           </div>
         </div>
+
+        {modoEdicion ? (
+          <div className="detalle-edicion">
+            <FormularioReferencialRAI
+              referencial={r}
+              onGuardar={handleGuardadoEdicion}
+              onCancelar={() => setModoEdicion(false)}
+              ocultarTitulo
+            />
+          </div>
+        ) : (
+          <>
+            <div className="detalle-mapa-wrapper">
+              <div className="detalle-mapa" ref={mapDivRef} />
+              {!pin && (
+                <div className="detalle-mapa-hint">Haz clic en el mapa para asignar ubicación</div>
+              )}
+            </div>
+
+            <div className="detalle-mapa-acciones">
+              {pin ? (
+                <>
+                  <span className="detalle-mapa-coords">{pin[0].toFixed(6)}, {pin[1].toFixed(6)}</span>
+                  {haCambiado ? (
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={handleGuardarUbicacion}
+                      disabled={guardando}
+                    >
+                      {guardando ? 'Guardando…' : 'Guardar ubicación'}
+                    </button>
+                  ) : guardado && (
+                    <span className="detalle-mapa-ok">✓ Ubicación guardada</span>
+                  )}
+                </>
+              ) : (
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={handleBuscarAutomatico}
+                  disabled={buscandoCoords}
+                >
+                  {buscandoCoords && <span className="spinner spinner-dark" />}
+                  {buscandoCoords ? 'Buscando…' : 'Buscar coordenadas automáticamente'}
+                </button>
+              )}
+            </div>
+            {errorGuardar && <div className="form-error">{errorGuardar}</div>}
+            {geoError && <div className="form-error">{geoError}</div>}
+
+            <div className="detalle-grid">
+              <Campo label="No. de Avalúo Vinculado"    value={r.no_avaluo} full />
+              <Campo label="Dirección Original Completa" value={r.direccion_original} full />
+              <Campo label="Calle/Avenida, Número"      value={calleAvenidaNumero(r)} />
+              <Campo label="Departamento"                value={r.departamento} />
+              <Campo label="Habitaciones"                value={r.habitaciones} />
+              <Campo label="Baños"                       value={r.banos} />
+              <Campo label="Parqueos"                     value={r.parqueos} />
+              <Campo label="Antigüedad"                  value={r.antiguedad != null ? `${r.antiguedad} años` : null} />
+              <Campo label="Estado de Conservación"      value={r.estado_conservacion} />
+              <Campo label="Moneda y Precio Original"    value={monedaPrecioOriginal(r)} />
+              {r.moneda === 'USD' && <Campo label="Tipo de Cambio" value={r.tipo_cambio} />}
+              <Campo label="Fuente"    value={r.fuente} />
+              <Campo label="Contacto / Teléfono" value={r.contacto} />
+              {r.url && (
+                <div className="detalle-campo detalle-campo-full">
+                  <span className="detalle-label">URL / Referencia</span>
+                  <a className="detalle-value" href={r.url} target="_blank" rel="noreferrer">{r.url}</a>
+                </div>
+              )}
+              {r.observaciones && (
+                <Campo label="Observaciones" value={r.observaciones} full />
+              )}
+
+              <div className="detalle-campo detalle-campo-full">
+                <span className="detalle-label">Fotos</span>
+                <FotosReferencialRAI referencialId={r.id} key={r.id} editable={false} />
+              </div>
+            </div>
+          </>
+        )}
 
       </div>
     </div>

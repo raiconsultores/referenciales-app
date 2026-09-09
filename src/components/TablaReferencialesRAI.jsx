@@ -73,7 +73,7 @@ function exportarExcel(registros, nombreArchivo) {
   XLSX.writeFile(wb, nombreArchivo)
 }
 
-export default function TablaReferencialesRAI({ referenciales, onActualizarCoordenadas }) {
+export default function TablaReferencialesRAI({ referenciales, onActualizarCoordenadas, onRecargar }) {
   const [seleccionados, setSeleccionados] = useState(new Set())
   const [detalleRef, setDetalleRef]       = useState(null)
   const [anchoTabla, setAnchoTabla]       = useState(0)
@@ -240,6 +240,7 @@ export default function TablaReferencialesRAI({ referenciales, onActualizarCoord
           referencial={detalleRef}
           onCerrar={() => setDetalleRef(null)}
           onActualizarCoordenadas={onActualizarCoordenadas}
+          onRecargar={onRecargar}
         />
       )}
     </>

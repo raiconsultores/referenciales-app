@@ -40,7 +40,23 @@ const IconImagen = () => (
   </svg>
 )
 
-export default function FotosReferencialRAI({ referencialId }) {
+const IconChevron = ({ flip }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={flip ? { transform: 'scaleX(-1)' } : undefined}>
+    <path d="M12 4L6 10L12 16" />
+  </svg>
+)
+
+const IconTrash = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M2 4H12" />
+    <path d="M5 4V2.5H9V4" />
+    <path d="M3 4L3.75 11.5H10.25L11 4" />
+    <path d="M5.5 6.5V9.5" />
+    <path d="M8.5 6.5V9.5" />
+  </svg>
+)
+
+export default function FotosReferencialRAI({ referencialId, editable = true }) {
   const [fotos, setFotos]       = useState([])
   const [urls, setUrls]         = useState({})
   const [cargando, setCargando] = useState(true)
@@ -48,6 +64,7 @@ export default function FotosReferencialRAI({ referencialId }) {
   const [error, setError]       = useState(null)
   const [resultadosCompresion, setResultadosCompresion] = useState([])
   const [arrastrando, setArrastrando] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
   const inputRef = useRef(null)
   const dragCounter = useRef(0)
 
@@ -68,7 +85,19 @@ export default function FotosReferencialRAI({ referencialId }) {
     cargarFotos()
     setResultadosCompresion([])
     setError(null)
+    setLightboxIndex(null)
   }, [cargarFotos])
+
+  useEffect(() => {
+    if (lightboxIndex == null) return
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setLightboxIndex(null)
+      else if (e.key === 'ArrowLeft') setLightboxIndex(i => (i - 1 + fotos.length) % fotos.length)
+      else if (e.key === 'ArrowRight') setLightboxIndex(i => (i + 1) % fotos.length)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxIndex, fotos.length])
 
   const procesarArchivos = async (fileList) => {
     const archivos = Array.from(fileList || [])
@@ -170,54 +199,67 @@ export default function FotosReferencialRAI({ referencialId }) {
         .delete()
         .eq('id', foto.id)
       if (errorDelete) throw errorDelete
-      setFotos(prev => prev.filter(f => f.id !== foto.id))
+      setFotos(prev => {
+        const restantes = prev.filter(f => f.id !== foto.id)
+        setLightboxIndex(i => {
+          if (i == null) return null
+          if (restantes.length === 0) return null
+          return Math.min(i, restantes.length - 1)
+        })
+        return restantes
+      })
     } catch (err) {
       setError(err?.message ?? 'Error al eliminar la foto')
     }
   }
 
+  const irAnterior = () => setLightboxIndex(i => (i - 1 + fotos.length) % fotos.length)
+  const irSiguiente = () => setLightboxIndex(i => (i + 1) % fotos.length)
+
   return (
     <div className="fotos-seccion">
-      <div
-        className={`fotos-dropzone${arrastrando ? ' fotos-dropzone-activa' : ''}${subiendo ? ' fotos-dropzone-disabled' : ''}`}
-        onClick={() => !subiendo && inputRef.current?.click()}
-        onKeyDown={e => {
-          if (!subiendo && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault()
-            inputRef.current?.click()
-          }
-        }}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        role="button"
-        tabIndex={0}
-        aria-label="Arrastra tus fotos aquí o haz clic para seleccionar"
-      >
-        {subiendo ? (
-          <>
-            <span className="spinner spinner-dark" />
-            <span className="fotos-dropzone-texto">
-              {subiendo.etapa === 'comprimiendo' ? 'Comprimiendo' : 'Subiendo'} {subiendo.actual}/{subiendo.total}…
-            </span>
-          </>
-        ) : (
-          <>
-            <IconImagen />
-            <span className="fotos-dropzone-texto">Arrastra tus fotos aquí</span>
-            <span className="fotos-dropzone-subtexto">o haz clic para seleccionar</span>
-          </>
-        )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-          multiple
-          hidden
-          onChange={handleSeleccionArchivos}
-        />
-      </div>
+      {editable && (
+        <div
+          className={`fotos-dropzone${arrastrando ? ' fotos-dropzone-activa' : ''}${subiendo ? ' fotos-dropzone-disabled' : ''}`}
+          onClick={() => !subiendo && inputRef.current?.click()}
+          onKeyDown={e => {
+            if (!subiendo && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault()
+              inputRef.current?.click()
+            }
+          }}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          role="button"
+          tabIndex={0}
+          aria-label="Arrastra tus fotos aquí o haz clic para seleccionar"
+        >
+          {subiendo ? (
+            <>
+              <span className="spinner spinner-dark" />
+              <span className="fotos-dropzone-texto">
+                {subiendo.etapa === 'comprimiendo' ? 'Comprimiendo' : 'Subiendo'} {subiendo.actual}/{subiendo.total}…
+              </span>
+            </>
+          ) : (
+            <>
+              <IconImagen />
+              <span className="fotos-dropzone-texto">Arrastra tus fotos aquí</span>
+              <span className="fotos-dropzone-subtexto">o haz clic para seleccionar</span>
+            </>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+            multiple
+            hidden
+            onChange={handleSeleccionArchivos}
+          />
+        </div>
+      )}
 
       {error && <div className="form-error">{error}</div>}
 
@@ -249,19 +291,69 @@ export default function FotosReferencialRAI({ referencialId }) {
         <div className="fotos-vacio">Sin fotos todavía.</div>
       ) : (
         <div className="fotos-grid">
-          {fotos.map(foto => (
-            <div key={foto.id} className="fotos-item">
+          {fotos.map((foto, i) => (
+            <div
+              key={foto.id}
+              className="fotos-item"
+              onClick={() => setLightboxIndex(i)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLightboxIndex(i) } }}
+              aria-label={`Ver foto ${i + 1} en tamaño completo`}
+            >
               {urls[foto.path]
                 ? <img src={urls[foto.path]} alt={foto.nombre || 'Foto del referencial'} loading="lazy" />
                 : <div className="fotos-item-sin-url" />}
               <button
                 type="button"
                 className="fotos-item-eliminar"
-                onClick={() => handleEliminar(foto)}
+                onClick={e => { e.stopPropagation(); handleEliminar(foto) }}
                 title="Eliminar foto"
               ><IconX /></button>
             </div>
           ))}
+        </div>
+      )}
+
+      {lightboxIndex != null && fotos[lightboxIndex] && (
+        <div
+          className="lightbox-overlay"
+          onClick={e => { if (e.target === e.currentTarget) setLightboxIndex(null) }}
+        >
+          <span className="lightbox-contador">{lightboxIndex + 1} / {fotos.length}</span>
+
+          <button type="button" className="lightbox-close" onClick={() => setLightboxIndex(null)} aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              <path d="M2 2L14 14M14 2L2 14" />
+            </svg>
+          </button>
+
+          {fotos.length > 1 && (
+            <>
+              <button type="button" className="lightbox-nav lightbox-nav-prev" onClick={irAnterior} aria-label="Foto anterior">
+                <IconChevron />
+              </button>
+              <button type="button" className="lightbox-nav lightbox-nav-next" onClick={irSiguiente} aria-label="Foto siguiente">
+                <IconChevron flip />
+              </button>
+            </>
+          )}
+
+          {urls[fotos[lightboxIndex].path] && (
+            <img
+              className="lightbox-img"
+              src={urls[fotos[lightboxIndex].path]}
+              alt={fotos[lightboxIndex].nombre || 'Foto del referencial'}
+            />
+          )}
+
+          <button
+            type="button"
+            className="lightbox-eliminar"
+            onClick={() => handleEliminar(fotos[lightboxIndex])}
+          >
+            <IconTrash /> Eliminar foto
+          </button>
         </div>
       )}
     </div>

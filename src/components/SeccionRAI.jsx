@@ -181,6 +181,7 @@ export default function SeccionRAI() {
         <TablaReferencialesRAI
           referenciales={referencialesFiltrados}
           onActualizarCoordenadas={handleActualizarCoordenadas}
+          onRecargar={cargarReferenciales}
         />
       )}
 

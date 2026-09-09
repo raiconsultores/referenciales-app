@@ -4,6 +4,7 @@ import { inferirDeptMunicipio } from '../utils/geoUtils'
 import { geocodificarDireccion } from '../utils/geocode'
 import { parseCoords } from '../utils/coords'
 import GeocodeResultsPicker from './GeocodeResultsPicker'
+import FotosReferencialRAI from './FotosReferencialRAI'
 
 const TIPOS = ['Casa', 'Apartamento', 'Terreno', 'Comercio', 'Oficina']
 const ESTADOS = ['Excelente', 'Bueno', 'Regular', 'Malo']
@@ -38,7 +39,7 @@ const EMPTY = {
   observaciones:        '',
 }
 
-export default function FormularioReferencialRAI({ referencial, onGuardar, onCancelar }) {
+export default function FormularioReferencialRAI({ referencial, onGuardar, onCancelar, ocultarTitulo = false }) {
   const [form, setForm]             = useState(EMPTY)
   const [coordInput, setCoordInput] = useState('')
   const [guardando, setGuardando]   = useState(false)
@@ -211,7 +212,7 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
   return (
     <>
     <form onSubmit={handleSubmit} className="formulario">
-      <h2>{referencial ? 'Editar Referencial RAI' : 'Nuevo Referencial RAI'}</h2>
+      {!ocultarTitulo && <h2>{referencial ? 'Editar Referencial RAI' : 'Nuevo Referencial RAI'}</h2>}
 
       <div className="form-grid">
 
@@ -420,6 +421,13 @@ export default function FormularioReferencialRAI({ referencial, onGuardar, onCan
             placeholder="Detalles adicionales…"
           />
         </div>
+
+        {referencial && (
+          <div className="form-group form-full">
+            <label>Fotos</label>
+            <FotosReferencialRAI referencialId={referencial.id} editable />
+          </div>
+        )}
 
       </div>
 
