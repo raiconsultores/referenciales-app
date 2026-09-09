@@ -1,3 +1,12 @@
+import { useRef } from 'react'
+
+const IconSearch = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="6" cy="6" r="4.5" />
+    <path d="M12.5 12.5L9.5 9.5" />
+  </svg>
+)
+
 export default function FiltrosPanel({
   filtroZona, setFiltroZona,
   filtroTipo, setFiltroTipo,
@@ -6,6 +15,7 @@ export default function FiltrosPanel({
   filtroMunicipio, setFiltroMunicipio,
   referenciales,
 }) {
+  const inputBusquedaRef = useRef(null)
   const hasFiltro = filtroZona || filtroTipo || filtroZonaNum || filtroDepartamento || filtroMunicipio
 
   // Zonas numéricas solo aplican para Ciudad de Guatemala
@@ -47,13 +57,25 @@ export default function FiltrosPanel({
     <div className="filtros-panel">
 
       <div className="filtros-fila">
-        <input
-          type="text"
-          value={filtroZona}
-          onChange={e => setFiltroZona(e.target.value)}
-          placeholder="Buscar descripción o dirección…"
-          className="filtro-input"
-        />
+        <div className="filtro-busqueda">
+          <input
+            ref={inputBusquedaRef}
+            type="text"
+            value={filtroZona}
+            onChange={e => setFiltroZona(e.target.value)}
+            placeholder="Buscar descripción o dirección…"
+            className="filtro-input filtro-input-busqueda"
+          />
+          <button
+            type="button"
+            className="btn-buscar"
+            title="Buscar"
+            tabIndex={-1}
+            onClick={() => inputBusquedaRef.current?.focus()}
+          >
+            <IconSearch />
+          </button>
+        </div>
         <select
           value={filtroTipo}
           onChange={e => setFiltroTipo(e.target.value)}

@@ -15,7 +15,7 @@ function pinIcon() {
     className: '',
     html: `<div style="
       width:18px;height:18px;
-      background:#1e40af;
+      background:#1E3A5F;
       border:3px solid #fff;
       border-radius:50%;
       box-shadow:0 2px 6px rgba(0,0,0,.45);

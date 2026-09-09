@@ -5,6 +5,46 @@ import SeccionRAI from './components/SeccionRAI'
 import SeccionReportes from './components/SeccionReportes'
 import LoginScreen from './components/LoginScreen'
 
+const IconLogo = () => (
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 9.5L10 3L17 9.5" />
+    <path d="M4.5 8.5V16.5H15.5V8.5" />
+    <path d="M8 16.5V12H12V16.5" />
+  </svg>
+)
+
+const IconExternos = () => (
+  <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="3" width="6" height="6" rx="1" />
+    <rect x="11" y="3" width="6" height="6" rx="1" />
+    <rect x="3" y="11" width="6" height="6" rx="1" />
+    <rect x="11" y="11" width="6" height="6" rx="1" />
+  </svg>
+)
+
+const IconRAI = () => (
+  <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <ellipse cx="10" cy="5" rx="6.5" ry="2.5" />
+    <path d="M3.5 5V15C3.5 16.38 6.46 17.5 10 17.5C13.54 17.5 16.5 16.38 16.5 15V5" />
+    <path d="M16.5 10C16.5 11.38 13.54 12.5 10 12.5C6.46 12.5 3.5 11.38 3.5 10" />
+  </svg>
+)
+
+const IconReportes = () => (
+  <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4.5 2.5V17.5" />
+    <path d="M4.5 3.5H14.5L12.5 6.5L14.5 9.5H4.5" />
+  </svg>
+)
+
+const IconLogout = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5.5 12.5H3C2.45 12.5 2 12.05 2 11.5V2.5C2 1.95 2.45 1.5 3 1.5H5.5" />
+    <path d="M9.5 9.5L12.5 6.5L9.5 3.5" />
+    <path d="M12.5 6.5H5.5" />
+  </svg>
+)
+
 export default function App() {
   const [session, setSession]           = useState(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
@@ -75,71 +115,84 @@ export default function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="header-inner">
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <span className="sidebar-brand-icon"><IconLogo /></span>
+          <span className="sidebar-brand-text">
+            Referenciales
+            <small>Guatemala</small>
+          </span>
+        </div>
+
+        <nav className="sidebar-nav">
+          <button
+            className={`sidebar-link ${seccionActiva === 'externos' ? 'sidebar-link-activo' : ''}`}
+            onClick={() => setSeccionActiva('externos')}
+          >
+            <IconExternos />
+            <span>Referenciales Externos</span>
+          </button>
+          <button
+            className={`sidebar-link ${seccionActiva === 'rai' ? 'sidebar-link-activo' : ''}`}
+            onClick={() => setSeccionActiva('rai')}
+          >
+            <IconRAI />
+            <span>Referenciales RAI</span>
+          </button>
+          <button
+            className={`sidebar-link ${seccionActiva === 'reportes' ? 'sidebar-link-activo' : ''}`}
+            onClick={() => setSeccionActiva('reportes')}
+          >
+            <IconReportes />
+            <span>Reportes</span>
+            {pendientesCount > 0 && <span className="sidebar-badge">{pendientesCount}</span>}
+          </button>
+        </nav>
+      </aside>
+
+      <div className="app-content">
+        <header className="app-topbar">
           <div>
-            <h1 className="header-title">Referenciales Inmobiliarios</h1>
-            <p className="header-sub">Guatemala</p>
+            <h1 className="topbar-title">Referenciales Inmobiliarios</h1>
+            <p className="topbar-sub">Guatemala</p>
           </div>
-          <div className="header-actions">
+          <div className="topbar-actions">
             {pendientesCount > 0 && (
               <button
-                className="header-flags-badge"
+                className="topbar-flags-badge"
                 onClick={() => setSeccionActiva('reportes')}
                 title="Ver reportes pendientes"
               >
                 🚩 {pendientesCount} pendiente{pendientesCount !== 1 ? 's' : ''}
               </button>
             )}
-            <span className="header-email">{session.user.email}</span>
-            <button onClick={handleLogout} className="btn btn-logout">
+            <span className="topbar-email">{session.user.email}</span>
+            <button onClick={handleLogout} className="btn btn-secondary btn-sm">
+              <IconLogout />
               Salir
             </button>
           </div>
-        </div>
-        <div className="header-inner header-inner-nav">
-          <nav className="seccion-tabs">
-            <button
-              className={`seccion-tab ${seccionActiva === 'externos' ? 'seccion-tab-activo' : ''}`}
-              onClick={() => setSeccionActiva('externos')}
-            >
-              Referenciales Externos
-            </button>
-            <button
-              className={`seccion-tab ${seccionActiva === 'rai' ? 'seccion-tab-activo' : ''}`}
-              onClick={() => setSeccionActiva('rai')}
-            >
-              Referenciales RAI
-            </button>
-            <button
-              className={`seccion-tab ${seccionActiva === 'reportes' ? 'seccion-tab-activo' : ''}`}
-              onClick={() => setSeccionActiva('reportes')}
-            >
-              Reportes
-              {pendientesCount > 0 && <span className="seccion-tab-badge">{pendientesCount}</span>}
-            </button>
-          </nav>
-        </div>
-      </header>
+        </header>
 
-      <main className="app-main">
-        {seccionActiva === 'externos' && (
-          <SeccionExternos
-            flagsPendientesIds={flagsPendientesIds}
-            onReportar={handleReportar}
-          />
-        )}
-        {seccionActiva === 'rai' && <SeccionRAI />}
-        {seccionActiva === 'reportes' && (
-          <SeccionReportes
-            flags={flags}
-            loading={flagsLoading}
-            error={flagsError}
-            onActualizarEstado={handleActualizarEstadoFlag}
-          />
-        )}
-      </main>
+        <main className="app-main">
+          {seccionActiva === 'externos' && (
+            <SeccionExternos
+              flagsPendientesIds={flagsPendientesIds}
+              onReportar={handleReportar}
+            />
+          )}
+          {seccionActiva === 'rai' && <SeccionRAI />}
+          {seccionActiva === 'reportes' && (
+            <SeccionReportes
+              flags={flags}
+              loading={flagsLoading}
+              error={flagsError}
+              onActualizarEstado={handleActualizarEstadoFlag}
+            />
+          )}
+        </main>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 
+const IconLogo = () => (
+  <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 9.5L10 3L17 9.5" />
+    <path d="M4.5 8.5V16.5H15.5V8.5" />
+    <path d="M8 16.5V12H12V16.5" />
+  </svg>
+)
+
 export default function LoginScreen() {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -26,6 +34,7 @@ export default function LoginScreen() {
     <div className="login-bg">
       <div className="login-card">
         <div className="login-header">
+          <div className="login-brand-icon"><IconLogo /></div>
           <h1 className="login-title">Referenciales Inmobiliarios</h1>
           <p className="login-subtitle">Guatemala</p>
         </div>

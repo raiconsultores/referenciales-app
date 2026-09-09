@@ -26,9 +26,9 @@ function makeIcon(tipo, activo = false, reportado = false) {
     ">
       ${reportado ? `<div style="
         position:absolute;inset:0;
-        border:2px solid #dc2626;
+        border:2px solid #EF4444;
         border-radius:50%;
-        box-shadow:0 0 0 2px rgba(220,38,38,.3);
+        box-shadow:0 0 0 2px rgba(239,68,68,.3);
       "></div>` : ''}
       <div style="
         width:${s}px;height:${s}px;
@@ -122,8 +122,8 @@ export default function MapaReferenciales({
       }).addTo(map)
 
       const lines = [
-        reportado ? '<strong style="color:#dc2626">🚩 Reporte pendiente</strong>' : null,
-        `<strong style="color:#1e40af">${r.tipo}</strong>`,
+        reportado ? '<strong style="color:#EF4444">🚩 Reporte pendiente</strong>' : null,
+        `<strong>${r.tipo}</strong>`,
         r.zona ? `<strong>${r.zona}</strong> — ${r.direccion}` : r.direccion,
         `<strong>${fmtQ(r.precio_total) ?? '—'}</strong>`,
         r.m2_terreno      ? `Terreno: ${r.m2_terreno} m²  →  ${fmtQ(r.precio_m2_terreno) ?? '—'}/m²` : null,

@@ -1,6 +1,48 @@
 const fmtQ = (n) =>
   n != null ? `Q ${Math.round(n).toLocaleString('es-GT')}` : '—'
 
+const IconList = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M6 4.5H15" /><path d="M6 9H15" /><path d="M6 13.5H15" />
+    <path d="M3 4.5H3.01" /><path d="M3 9H3.01" /><path d="M3 13.5H3.01" />
+  </svg>
+)
+
+const IconLand = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M2 15L6.5 5.5L10 12L12.5 7.5L16 15" />
+    <path d="M2 15H16" />
+  </svg>
+)
+
+const IconBuilding = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4" y="2.5" width="10" height="13" rx="1" />
+    <path d="M7 6H8" /><path d="M10 6H11" /><path d="M7 9H8" /><path d="M10 9H11" />
+    <path d="M7.5 15.5V12.5H10.5V15.5" />
+  </svg>
+)
+
+const IconTrend = () => (
+  <svg width="30" height="16" viewBox="0 0 30 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M1 12L8 7L13 10L21 3L29 8" />
+  </svg>
+)
+
+function StatCard({ icon, iconClass, value, label, sub }) {
+  return (
+    <div className="stat-card">
+      <div className="stat-card-top">
+        <span className={`stat-icon ${iconClass || ''}`}>{icon}</span>
+        <span className="stat-trend"><IconTrend /></span>
+      </div>
+      <div className="stat-value">{value}</div>
+      <div className="stat-label">{label}</div>
+      {sub && <div className="stat-sub">{sub}</div>}
+    </div>
+  )
+}
+
 export default function EstadisticasPanelRAI({ referenciales }) {
   const total = referenciales.length
 
@@ -17,20 +59,17 @@ export default function EstadisticasPanelRAI({ referenciales }) {
 
   return (
     <div className="stats-panel">
-      <div className="stat-card">
-        <div className="stat-value">{total}</div>
-        <div className="stat-label">Total Registros</div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-value">{fmtQ(avgTerr)}</div>
-        <div className="stat-label">Promedio Q/m² Terreno</div>
-        <div className="stat-sub">{conTerreno.length} registros con m²</div>
-      </div>
-      <div className="stat-card">
-        <div className="stat-value">{fmtQ(avgConstr)}</div>
-        <div className="stat-label">Promedio Q/m² Construcción</div>
-        <div className="stat-sub">{conConstruccion.length} registros con m²</div>
-      </div>
+      <StatCard icon={<IconList />} value={total} label="Total Registros" />
+      <StatCard
+        icon={<IconLand />} iconClass="stat-icon-success"
+        value={fmtQ(avgTerr)} label="Promedio Q/m² Terreno"
+        sub={`${conTerreno.length} registros con m²`}
+      />
+      <StatCard
+        icon={<IconBuilding />} iconClass="stat-icon-gold"
+        value={fmtQ(avgConstr)} label="Promedio Q/m² Construcción"
+        sub={`${conConstruccion.length} registros con m²`}
+      />
     </div>
   )
 }

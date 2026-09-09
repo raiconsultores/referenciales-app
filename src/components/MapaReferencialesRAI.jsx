@@ -44,7 +44,7 @@ const fmtQ = (n) =>
 
 function popupHtml(r, fotos) {
   const lines = [
-    `<strong style="color:#1e40af">${r.tipo}</strong>`,
+    `<strong>${r.tipo}</strong>`,
     [r.colonia, r.zona, r.municipio].filter(Boolean).join(' — '),
     `<strong>${fmtQ(r.precio_quetzales) ?? '—'}</strong>`,
     r.m2_terreno      ? `Terreno: ${r.m2_terreno} m²  →  ${fmtQ(r.precio_m2_terreno) ?? '—'}/m²` : null,
