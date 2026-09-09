@@ -7,9 +7,27 @@ import DashboardTablaOrdenable from './DashboardTablaOrdenable'
 const MUNICIPIO_ZONAS = 'Ciudad de Guatemala'
 const TIPOS_CANONICOS = ['Casa', 'Apartamento', 'Terreno', 'Comercio', 'Oficina']
 const MUESTRA_MINIMA = 3
+const MESES_VENTANA = 12
 
 const fmtQ = (n) =>
   n != null ? `Q ${Math.round(n).toLocaleString('es-GT')}` : '—'
+
+const fmtFecha = (d) =>
+  d.toLocaleDateString('es-GT', { day: 'numeric', month: 'long', year: 'numeric' })
+
+function calcularCorteVentana() {
+  const corte = new Date()
+  corte.setHours(0, 0, 0, 0)
+  corte.setMonth(corte.getMonth() - MESES_VENTANA)
+  return corte
+}
+
+function dentroDeVentana(fechaCaptura, corte) {
+  if (!fechaCaptura) return false
+  const fecha = new Date(fechaCaptura)
+  if (Number.isNaN(fecha.getTime())) return false
+  return fecha >= corte
+}
 
 const IconList = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -29,6 +47,13 @@ const IconBuilding = () => (
     <path d="M7.5 15.5V12.5H10.5V15.5" />
   </svg>
 )
+const IconCalendario = () => (
+  <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2.5" y="3.5" width="13" height="12" rx="1.5" />
+    <path d="M2.5 7H15.5" />
+    <path d="M5.5 2V4.5" /><path d="M12.5 2V4.5" />
+  </svg>
+)
 const IconTrophy = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M6 3H12V8C12 9.66 10.66 11 9 11C7.34 11 6 9.66 6 8V3Z" />
@@ -41,8 +66,11 @@ const IconTrophy = () => (
 const avg = (arr, campo) =>
   arr.length ? arr.reduce((s, r) => s + parseFloat(r[campo] ?? 0), 0) / arr.length : null
 
-export function useDashboardData(referenciales) {
+export function useDashboardData(referencialesOriginal) {
   return useMemo(() => {
+    const corte = calcularCorteVentana()
+    const referenciales = referencialesOriginal.filter(r => dentroDeVentana(r.fecha_captura, corte))
+
     const total = referenciales.length
     const conTerreno      = referenciales.filter(r => r.precio_m2_terreno != null)
     const conConstruccion = referenciales.filter(r => r.precio_m2_construccion != null)
@@ -119,8 +147,9 @@ export function useDashboardData(referenciales) {
     return {
       total, avgTerrenoGeneral, avgConstruccionGeneral, municipioTop,
       municipios, top10Terreno, top10Construccion, distribTipo, zonas,
+      corte,
     }
-  }, [referenciales])
+  }, [referencialesOriginal])
 }
 
 export default function SeccionDashboardRAI() {
@@ -144,6 +173,7 @@ export default function SeccionDashboardRAI() {
   const {
     total, avgTerrenoGeneral, avgConstruccionGeneral, municipioTop,
     municipios, top10Terreno, top10Construccion, distribTipo, zonas,
+    corte,
   } = useDashboardData(referenciales)
 
   if (loading) return <div className="loading">Cargando análisis de mercado…</div>
@@ -154,6 +184,11 @@ export default function SeccionDashboardRAI() {
 
   return (
     <div>
+      <div className="dashboard-periodo">
+        <IconCalendario />
+        Basado en referenciales de los últimos 12 meses (desde el {fmtFecha(corte)} hasta hoy)
+      </div>
+
       <div className="stats-panel">
         <div className="stat-card">
           <div className="stat-card-top"><span className="stat-icon"><IconList /></span></div>
