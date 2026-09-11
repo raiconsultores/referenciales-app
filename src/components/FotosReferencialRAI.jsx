@@ -304,12 +304,14 @@ export default function FotosReferencialRAI({ referencialId, editable = true }) 
               {urls[foto.path]
                 ? <img src={urls[foto.path]} alt={foto.nombre || 'Foto del referencial'} loading="lazy" />
                 : <div className="fotos-item-sin-url" />}
-              <button
-                type="button"
-                className="fotos-item-eliminar"
-                onClick={e => { e.stopPropagation(); handleEliminar(foto) }}
-                title="Eliminar foto"
-              ><IconX /></button>
+              {editable && (
+                <button
+                  type="button"
+                  className="fotos-item-eliminar"
+                  onClick={e => { e.stopPropagation(); handleEliminar(foto) }}
+                  title="Eliminar foto"
+                ><IconX /></button>
+              )}
             </div>
           ))}
         </div>
